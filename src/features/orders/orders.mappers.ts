@@ -28,6 +28,7 @@ export type PublicPayment = {
   paymentMethod: string;
   paidAt: string;
   notes: string | null;
+  hasPaymentReceipt: boolean;
   attachments: PublicAttachment[];
   createdAt: string;
   updatedAt: string;
@@ -80,6 +81,7 @@ export function toPublicPayment(payment: Payment): PublicPayment {
     paymentMethod: payment.paymentMethod,
     paidAt: payment.paidAt.toISOString(),
     notes: payment.notes,
+    hasPaymentReceipt: payment.hasPaymentReceipt,
     attachments: attachments.map(toPublicAttachment),
     createdAt: payment.createdAt.toISOString(),
     updatedAt: payment.updatedAt.toISOString(),

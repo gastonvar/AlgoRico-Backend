@@ -11,6 +11,7 @@ export const createPaymentBodySchema = z.object({
   paymentMethod: z.enum(PAYMENT_METHODS),
   paidAt: z.string().datetime({ offset: true }).optional(),
   notes: optionalTrimmed,
+  hasPaymentReceipt: z.boolean().optional(),
 });
 
 export const updatePaymentBodySchema = z
@@ -20,6 +21,7 @@ export const updatePaymentBodySchema = z
     paymentMethod: z.enum(PAYMENT_METHODS).optional(),
     paidAt: z.string().datetime({ offset: true }).optional(),
     notes: z.string().trim().max(10_000).nullable().optional(),
+    hasPaymentReceipt: z.boolean().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: 'At least one field is required',

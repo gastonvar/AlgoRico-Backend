@@ -154,6 +154,7 @@ async function seed(): Promise<void> {
     paymentMethod: 'BANK_TRANSFER',
     paidAt: addZonedDays(now, -6),
     notes: 'Sena / deposit',
+    hasPaymentReceipt: true,
   });
 
   const juanOrder = await Order.create({
@@ -265,6 +266,7 @@ async function seed(): Promise<void> {
     amount: '15000.00',
     paymentMethod: 'BANK_TRANSFER',
     paidAt: addZonedDays(now, -2),
+    hasPaymentReceipt: true,
   });
 
   await Task.bulkCreate([

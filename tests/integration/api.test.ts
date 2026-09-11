@@ -152,11 +152,13 @@ describe('Algo Rico API', () => {
         type: 'DEPOSIT',
         amount: 10000,
         paymentMethod: 'CASH',
+        hasPaymentReceipt: true,
       });
     expect(depositResponse.status).toBe(201);
     expect(depositResponse.body.data.status).toBe('CONFIRMED');
     expect(depositResponse.body.data.paymentStatus).toBe('PARTIALLY_PAID');
     expect(depositResponse.body.data.remainingBalance).toBe(20000);
+    expect(depositResponse.body.data.payments[0].hasPaymentReceipt).toBe(true);
     const paymentId = depositResponse.body.data.payments[0].id as string;
 
     const paymentAttachment = await agent
@@ -226,6 +228,10 @@ describe('Algo Rico API', () => {
     expect(finalPayment.status).toBe(201);
     expect(finalPayment.body.data.paymentStatus).toBe('PAID');
     expect(finalPayment.body.data.remainingBalance).toBe(0);
+    const finalRecord = finalPayment.body.data.payments.find(
+      (payment: { type: string }) => payment.type === 'FINAL',
+    );
+    expect(finalRecord.hasPaymentReceipt).toBe(false);
 
     const inProduction = await agent
       .patch(`/api/orders/${orderId}`)
@@ -299,10 +305,14 @@ describe('Algo Rico API', () => {
     const editedPayment = await agent
       .patch(`/api/payments/${paymentId}`)
       .set('x-csrf-token', csrfToken)
-      .send({ amount: 8000, notes: 'Adjusted deposit' });
+      .send({ amount: 8000, notes: 'Adjusted deposit', hasPaymentReceipt: false });
     expect(editedPayment.status).toBe(200);
     expect(editedPayment.body.data.paidAmount).toBe(28000);
     expect(editedPayment.body.data.remainingBalance).toBe(2000);
+    expect(
+      editedPayment.body.data.payments.find((payment: { id: string }) => payment.id === paymentId)
+        .hasPaymentReceipt,
+    ).toBe(false);
 
     const deletedPayment = await agent
       .delete(`/api/payments/${paymentId}`)
