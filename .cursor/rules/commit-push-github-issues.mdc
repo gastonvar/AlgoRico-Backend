@@ -1,0 +1,43 @@
+---
+description: When asked to commit and push, create a GitHub issue, branch, and issue-linked commit for frontend and/or backend
+alwaysApply: true
+---
+
+# Commit and push via GitHub issues
+
+When the user asks to **commit and push** (both), do not commit to `main`. Follow this workflow. If they only say commit, do not create an issue, branch, or push.
+
+AlgoRico is two git repos. Always inspect **both** before acting:
+
+- `frontend/` → `gastonvar/AlgoRico-Frontend`
+- `backend/` → `gastonvar/AlgoRico-Backend`
+
+In each repo, run status, diff, and recent log. Skip a repo with no commit-worthy changes. Never commit secrets (`.env`, credentials, keys).
+
+## Quality gate (required before issue, commit, or push)
+
+For each repo with commit-worthy changes, run lint, tests, and build **in that repo** and wait for them to pass. Do not create the GitHub issue, commit, or push if any of these fail; fix first and re-run until they pass.
+
+- `frontend/`: `npm run lint`, `npm run test`, `npm run build`
+- `backend/`: `npm run lint`, `npm run test`, `npm run build`
+
+Do not run e2e or load tests unless asked. If any check fails, stop the push workflow, fix, and re-run the failed command.
+
+## Descriptions (issue, commit, and PR)
+
+Issue, commit, and PR text must be **detailed and specific to that repo’s diff**. Cover why, what changed, which area, and any behavior a reviewer should know (new fields, migrations, UI copy, flags). No generic titles (“Updates”), empty bodies, or file dumps.
+
+**Commit:** subject is 1–2 why-focused sentences. The body explains the change in prose, then ends with `Closes #<number>`.
+
+**PR** (only when the user asks): specific title; body with Summary (why + what), notable details, and a Test plan. Same level of detail as the issue/commit, not a one-liner.
+
+## Per repo with changes
+
+1. Draft a specific **issue title** and **description** from the diff.
+2. Create the issue with `gh issue create --repo <owner/name> --title "..." --body "..."` and capture the issue number and URL. If `gh` is missing from PATH, locate GitHub CLI or install it before continuing.
+3. Create a branch from the current default branch: `{type}/{number}-{short-slug}` (e.g. `feat/42-recipe-upload`). Types: `feat`, `fix`, `chore`, `refactor`.
+4. Commit on that branch with the detailed message described above. The body **must include** `Closes #<number>`.
+5. Push the branch with `git push -u origin HEAD`. Do not force-push. Do not open a PR unless asked.
+6. Report the issue URL, branch name, and commit subject for each repo you pushed.
+
+If **both** repos have changes, create a separate issue, branch, commit, and push in each. Titles and descriptions may share context but must be specific to that repo.

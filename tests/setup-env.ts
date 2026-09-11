@@ -1,0 +1,12 @@
+process.env.NODE_ENV ??= 'test';
+process.env.DATABASE_URL ??= 'postgres://algorico:algorico@localhost:5433/algorico_test';
+process.env.FRONTEND_ORIGIN ??= 'http://localhost:5173';
+process.env.SESSION_SECRET ??= 'test-session-secret-value-32chars!';
+process.env.MINIO_ENDPOINT ??= 'http://localhost:9000';
+process.env.MINIO_ACCESS_KEY ??= 'algorico';
+process.env.MINIO_SECRET_KEY ??= 'algorico_dev_secret';
+process.env.MINIO_BUCKET ??= 'algorico-test';
+process.env.STORAGE_DRIVER ??= 'memory';
+process.env.COOKIE_SECURE ??= 'false';
+process.env.COOKIE_SAMESITE ??= 'lax';
+process.env.LOG_LEVEL ??= 'silent';

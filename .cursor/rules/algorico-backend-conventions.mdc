@@ -1,0 +1,23 @@
+---
+description: Backend conventions for the AlgoRico Express TypeScript API
+globs: src/**/*.ts
+alwaysApply: false
+---
+
+# AlgoRico Backend Conventions
+
+- Use feature-first structure: `features/<domain>/*.routes.ts`, `*.controller.ts`, `*.service.ts`, `*.schemas.ts`.
+- Keep controllers thin: read `req`, call services, return JSON/status, and delegate errors to `next(error)`.
+- Put business rules, authorization checks, transactions, and Sequelize access in services.
+- Validate request bodies, params, and query values with Zod middleware before controller logic.
+- Never trust client-provided ownership. Derive the current user from `req.auth!.sub`.
+- Use Sequelize query builders; avoid raw SQL unless there is a clear need and parameters are bound.
+- Use transactions for multi-write operations.
+- Use `pinoLogger` from `src/lib/pino.ts`; do not add custom console logger wrappers.
+- Do not log passwords, tokens, secrets, authorization headers, cookies, or raw sensitive response bodies.
+- Add database indexes for new lookups, joins, token lookups, and date/status filters.
+- File storage goes through a centralized MinIO/S3 client in `src/lib`; persist object keys in PostgreSQL, never blobs in the API.
+- Do not trust client-provided object keys for ownership; generate keys server-side and validate content type/size before upload.
+- Parse env in `src/config/env.ts`. Keep models and associations in `src/models`.
+- Schema changes go in `src/database/migrations/`. After adding or editing a migration, run `npm run db:migrate` in `backend/` and wait for it to succeed. Do not only tell the user to migrate.
+- Run `npm run lint` after substantive backend changes.

@@ -1,0 +1,11 @@
+---
+description: Apply Sequelize migrations locally after adding or changing them
+globs: src/database/migrations/**/*.ts
+alwaysApply: false
+---
+
+# Run Migrations After Schema Changes
+
+When you add or edit a file under `src/database/migrations/`, run `npm run db:migrate` in `backend/` yourself before finishing. Do not only tell the user to migrate.
+
+Wait for the command to succeed. If it fails, fix the migration and re-run. Do not run `db:migrate:down` unless the user asks.

@@ -1,0 +1,15 @@
+---
+description: Use Engram memory and SDD workflow tools during AlgoRico backend work
+globs: "**/*"
+alwaysApply: false
+---
+
+# Engram And SDD Tools
+
+When working in the AlgoRico backend, use Engram and SDD tools when they help preserve context or manage a spec-driven change.
+
+- Use Engram MCP memory to search prior context and save important backend decisions, conventions, discoveries, bug fixes, and session summaries.
+- Before calling any Engram MCP tool, read that tool's descriptor/schema from the MCP tool files.
+- Use SDD skills or SDD subagents for backend spec-driven workflows: init, exploration, proposal, design, specs, tasks, implementation, verification, archive, and onboarding.
+- Prefer SDD for larger backend changes that touch API contracts, authorization, data models, transactions, or cross-feature behavior.
+- Keep tool use proportional: do not add workflow overhead for small, obvious edits, but do save meaningful decisions and discoveries to Engram.
