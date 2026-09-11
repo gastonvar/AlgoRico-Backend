@@ -10,13 +10,14 @@ export type PaymentAttributes = {
   paymentMethod: PaymentMethod;
   paidAt: Date;
   notes: string | null;
+  hasPaymentReceipt: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
 
 export type PaymentCreationAttributes = Optional<
   PaymentAttributes,
-  'id' | 'notes' | 'createdAt' | 'updatedAt'
+  'id' | 'notes' | 'hasPaymentReceipt' | 'createdAt' | 'updatedAt'
 >;
 
 export class Payment extends Model<PaymentAttributes, PaymentCreationAttributes> {
@@ -27,6 +28,7 @@ export class Payment extends Model<PaymentAttributes, PaymentCreationAttributes>
   declare paymentMethod: PaymentMethod;
   declare paidAt: Date;
   declare notes: string | null;
+  declare hasPaymentReceipt: boolean;
   declare createdAt: Date;
   declare updatedAt: Date;
 }
@@ -62,6 +64,11 @@ export function initPaymentModel(sequelize: Sequelize): typeof Payment {
       notes: {
         type: DataTypes.TEXT,
         allowNull: true,
+      },
+      hasPaymentReceipt: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
       },
       createdAt: { type: DataTypes.DATE, allowNull: false },
       updatedAt: { type: DataTypes.DATE, allowNull: false },

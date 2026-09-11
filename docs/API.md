@@ -170,13 +170,19 @@ Overpayment returns `409`.
 
 ### `POST /api/orders/:orderId/payments`
 
-Body: `{ "type", "amount", "paymentMethod", "paidAt?", "notes?" }`
+Body: `{ "type", "amount", "paymentMethod", "paidAt?", "notes?", "hasPaymentReceipt?" }`
+
+`hasPaymentReceipt` defaults to `false`. It records whether a payment receipt was received and is independent of the optional receipt image.
 
 Response `201` is the updated order, including recalculated payment summary and status.
 
 ### `GET /api/payments/:paymentId`
 
-Includes payment proof attachments.
+Includes `hasPaymentReceipt` and payment proof attachments.
+
+### `PATCH /api/payments/:paymentId`
+
+Body may include `hasPaymentReceipt`.
 
 ### `POST /api/payments/:paymentId/attachments`
 

@@ -41,6 +41,7 @@ export async function registerPayment(
         paymentMethod: input.paymentMethod,
         paidAt: input.paidAt ? new Date(input.paidAt) : new Date(),
         notes: input.notes ?? null,
+        hasPaymentReceipt: input.hasPaymentReceipt ?? false,
       },
       { transaction },
     );
@@ -89,6 +90,7 @@ export async function updatePayment(
     if (input.paymentMethod !== undefined) payment.paymentMethod = input.paymentMethod;
     if (input.paidAt !== undefined) payment.paidAt = new Date(input.paidAt);
     if (input.notes !== undefined) payment.notes = input.notes;
+    if (input.hasPaymentReceipt !== undefined) payment.hasPaymentReceipt = input.hasPaymentReceipt;
     await payment.save({ transaction });
     return payment.orderId;
   });
