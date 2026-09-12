@@ -16,6 +16,7 @@ export const orderItemParamsSchema = z.object({
 const moneyAmountSchema = z.coerce.number().nonnegative().finite();
 
 export const orderItemBodySchema = z.object({
+  recipeId: z.string().uuid().optional(),
   description: z.string().trim().min(1).max(500).optional(),
   quantity: z.coerce.number().int().positive().max(10_000),
   unitPrice: z.coerce.number().nonnegative().finite().optional(),
@@ -58,6 +59,7 @@ export const updateOrderBodySchema = z
 
 export const updateOrderItemBodySchema = z
   .object({
+    recipeId: z.string().uuid().nullable().optional(),
     description: z.string().trim().min(1).max(500).optional(),
     quantity: z.coerce.number().int().positive().max(10_000).optional(),
     unitPrice: z.coerce.number().nonnegative().finite().optional(),

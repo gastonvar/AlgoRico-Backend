@@ -38,6 +38,9 @@ export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 export const TASK_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH'] as const;
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 
+export const INGREDIENT_UNITS = ['g', 'kg', 'ml', 'l', 'un'] as const;
+export type IngredientUnit = (typeof INGREDIENT_UNITS)[number];
+
 export const ALLOWED_IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 export type AllowedImageMimeType = (typeof ALLOWED_IMAGE_MIME_TYPES)[number];
 

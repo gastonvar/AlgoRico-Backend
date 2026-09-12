@@ -2,10 +2,13 @@ import { hashPassword } from '../lib/crypto.js';
 import { pinoLogger } from '../lib/pino.js';
 import {
   Client,
+  Ingredient,
   Interaction,
   Order,
   OrderItem,
   Payment,
+  Recipe,
+  RecipeIngredient,
   Task,
   User,
   initModels,
@@ -77,6 +80,105 @@ async function seed(): Promise<void> {
     needsFollowUp: false,
   });
 
+  const harina = await Ingredient.create({
+    name: 'Harina 000',
+    unit: 'kg',
+    pricePerUnit: '100.0000',
+  });
+  const azucar = await Ingredient.create({
+    name: 'Azúcar',
+    unit: 'kg',
+    pricePerUnit: '180.0000',
+  });
+  const huevos = await Ingredient.create({
+    name: 'Huevos',
+    unit: 'un',
+    pricePerUnit: '20.0000',
+  });
+  const manteca = await Ingredient.create({
+    name: 'Manteca',
+    unit: 'kg',
+    pricePerUnit: '3200.0000',
+  });
+  const chocolate = await Ingredient.create({
+    name: 'Chocolate',
+    unit: 'kg',
+    pricePerUnit: '4500.0000',
+  });
+  const vainilla = await Ingredient.create({
+    name: 'Esencia de vainilla',
+    unit: 'ml',
+    pricePerUnit: '8.0000',
+  });
+
+  const chocolateCake = await Recipe.create({
+    name: 'Torta de chocolate',
+    description: 'Torta de cumpleaños con ganache',
+  });
+  await RecipeIngredient.bulkCreate([
+    { recipeId: chocolateCake.id, ingredientId: harina.id, quantity: '0.5000' },
+    { recipeId: chocolateCake.id, ingredientId: azucar.id, quantity: '0.3000' },
+    { recipeId: chocolateCake.id, ingredientId: huevos.id, quantity: '4.0000' },
+    { recipeId: chocolateCake.id, ingredientId: manteca.id, quantity: '0.2000' },
+    { recipeId: chocolateCake.id, ingredientId: chocolate.id, quantity: '0.3000' },
+  ]);
+
+  const vanillaCupcakes = await Recipe.create({
+    name: 'Cupcakes de vainilla',
+    description: 'Docena de cupcakes con buttercream',
+  });
+  await RecipeIngredient.bulkCreate([
+    { recipeId: vanillaCupcakes.id, ingredientId: harina.id, quantity: '0.2500' },
+    { recipeId: vanillaCupcakes.id, ingredientId: azucar.id, quantity: '0.2000' },
+    { recipeId: vanillaCupcakes.id, ingredientId: huevos.id, quantity: '2.0000' },
+    { recipeId: vanillaCupcakes.id, ingredientId: manteca.id, quantity: '0.1000' },
+    { recipeId: vanillaCupcakes.id, ingredientId: vainilla.id, quantity: '10.0000' },
+  ]);
+
+  const cookieBox = await Recipe.create({
+    name: 'Caja de cookies',
+    description: 'Caja surtida de cookies',
+  });
+  await RecipeIngredient.bulkCreate([
+    { recipeId: cookieBox.id, ingredientId: harina.id, quantity: '0.4000' },
+    { recipeId: cookieBox.id, ingredientId: azucar.id, quantity: '0.2000' },
+    { recipeId: cookieBox.id, ingredientId: huevos.id, quantity: '1.0000' },
+    { recipeId: cookieBox.id, ingredientId: manteca.id, quantity: '0.1500' },
+  ]);
+
+  const brownies = await Recipe.create({
+    name: 'Bandeja de brownies',
+  });
+  await RecipeIngredient.bulkCreate([
+    { recipeId: brownies.id, ingredientId: harina.id, quantity: '0.3000' },
+    { recipeId: brownies.id, ingredientId: azucar.id, quantity: '0.4000' },
+    { recipeId: brownies.id, ingredientId: huevos.id, quantity: '3.0000' },
+    { recipeId: brownies.id, ingredientId: chocolate.id, quantity: '0.4000' },
+    { recipeId: brownies.id, ingredientId: manteca.id, quantity: '0.2000' },
+  ]);
+
+  const rainbowCupcakes = await Recipe.create({
+    name: 'Cupcakes arcoíris',
+  });
+  await RecipeIngredient.bulkCreate([
+    { recipeId: rainbowCupcakes.id, ingredientId: harina.id, quantity: '0.2500' },
+    { recipeId: rainbowCupcakes.id, ingredientId: azucar.id, quantity: '0.2000' },
+    { recipeId: rainbowCupcakes.id, ingredientId: huevos.id, quantity: '2.0000' },
+    { recipeId: rainbowCupcakes.id, ingredientId: manteca.id, quantity: '0.1000' },
+  ]);
+
+  const weddingCake = await Recipe.create({
+    name: 'Torta de casamiento',
+    description: 'Dos pisos',
+  });
+  await RecipeIngredient.bulkCreate([
+    { recipeId: weddingCake.id, ingredientId: harina.id, quantity: '1.2000' },
+    { recipeId: weddingCake.id, ingredientId: azucar.id, quantity: '0.8000' },
+    { recipeId: weddingCake.id, ingredientId: huevos.id, quantity: '10.0000' },
+    { recipeId: weddingCake.id, ingredientId: manteca.id, quantity: '0.5000' },
+    { recipeId: weddingCake.id, ingredientId: chocolate.id, quantity: '0.4000' },
+  ]);
+
   await Interaction.bulkCreate([
     {
       clientId: maria.id,
@@ -134,15 +236,17 @@ async function seed(): Promise<void> {
   await OrderItem.bulkCreate([
     {
       orderId: mariaOrder.id,
-      description: 'Chocolate birthday cake with flowers',
+      recipeId: chocolateCake.id,
+      description: 'Torta de chocolate',
       quantity: 1,
-      unitPrice: '45000.00',
+      unitPrice: '2174.00',
     },
     {
       orderId: mariaOrder.id,
-      description: 'Vanilla cupcakes with buttercream',
+      recipeId: vanillaCupcakes.id,
+      description: 'Cupcakes de vainilla',
       quantity: 12,
-      unitPrice: '1500.00',
+      unitPrice: '501.00',
     },
   ]);
   mariaOrder.totalAmount = '63000.00';
@@ -171,15 +275,17 @@ async function seed(): Promise<void> {
   await OrderItem.bulkCreate([
     {
       orderId: juanOrder.id,
-      description: 'Assorted cookie box',
+      recipeId: cookieBox.id,
+      description: 'Caja de cookies',
       quantity: 2,
-      unitPrice: '9000.00',
+      unitPrice: '576.00',
     },
     {
       orderId: juanOrder.id,
-      description: 'Custom brownie tray',
+      recipeId: brownies.id,
+      description: 'Bandeja de brownies',
       quantity: 1,
-      unitPrice: '14000.00',
+      unitPrice: '2602.00',
     },
   ]);
   juanOrder.totalAmount = '32000.00';
@@ -204,9 +310,10 @@ async function seed(): Promise<void> {
   });
   await OrderItem.create({
     orderId: sofiaOrder.id,
-    description: 'Rainbow cupcakes',
+    recipeId: rainbowCupcakes.id,
+    description: 'Cupcakes arcoíris',
     quantity: 12,
-    unitPrice: '1500.00',
+    unitPrice: '421.00',
   });
   sofiaOrder.totalAmount = '18000.00';
   await sofiaOrder.save();
@@ -238,9 +345,10 @@ async function seed(): Promise<void> {
   });
   await OrderItem.create({
     orderId: luciaOrder.id,
-    description: 'Two-tier wedding cake',
+    recipeId: weddingCake.id,
+    description: 'Torta de casamiento',
     quantity: 1,
-    unitPrice: '120000.00',
+    unitPrice: '5484.00',
   });
   luciaOrder.totalAmount = '120000.00';
   await luciaOrder.save();
@@ -256,9 +364,10 @@ async function seed(): Promise<void> {
   });
   await OrderItem.create({
     orderId: andresOrder.id,
-    description: 'Birthday Cake',
+    recipeId: chocolateCake.id,
+    description: 'Torta de chocolate',
     quantity: 1,
-    unitPrice: '45000.00',
+    unitPrice: '2174.00',
   });
   await Payment.create({
     orderId: andresOrder.id,
@@ -322,6 +431,8 @@ async function seed(): Promise<void> {
     {
       user: 'owner@algorico.local',
       clients: 5,
+      ingredients: 6,
+      recipes: 6,
       orders: 5,
     },
     'Development seed data created',

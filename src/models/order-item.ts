@@ -4,6 +4,7 @@ import { DataTypes, Model, type Sequelize } from 'sequelize';
 export type OrderItemAttributes = {
   id: string;
   orderId: string;
+  recipeId: string | null;
   description: string;
   quantity: number;
   unitPrice: string;
@@ -14,12 +15,13 @@ export type OrderItemAttributes = {
 
 export type OrderItemCreationAttributes = Optional<
   OrderItemAttributes,
-  'id' | 'notes' | 'createdAt' | 'updatedAt'
+  'id' | 'recipeId' | 'notes' | 'createdAt' | 'updatedAt'
 >;
 
 export class OrderItem extends Model<OrderItemAttributes, OrderItemCreationAttributes> {
   declare id: string;
   declare orderId: string;
+  declare recipeId: string | null;
   declare description: string;
   declare quantity: number;
   declare unitPrice: string;
@@ -39,6 +41,10 @@ export function initOrderItemModel(sequelize: Sequelize): typeof OrderItem {
       orderId: {
         type: DataTypes.UUID,
         allowNull: false,
+      },
+      recipeId: {
+        type: DataTypes.UUID,
+        allowNull: true,
       },
       description: {
         type: DataTypes.STRING(500),

@@ -3,7 +3,7 @@ import { sequelize } from '../../database/sequelize.js';
 import { AppError } from '../../errors/app-error.js';
 import { pinoLogger } from '../../lib/pino.js';
 import { storage } from '../../lib/storage.js';
-import { Attachment, Client, Order, OrderItem, Payment } from '../../models/index.js';
+import { Attachment, Client, Order, OrderItem, Payment, Recipe } from '../../models/index.js';
 import { paginationMeta, paginationOffset } from '../../shared/pagination.js';
 import { summarizePayments } from '../../shared/payments.js';
 import {
@@ -11,6 +11,7 @@ import {
   assertOrderStatusTransition,
 } from '../../shared/order-status.js';
 import { getClientById } from '../clients/clients.service.js';
+import { getRecipePrice } from '../recipes/recipes.service.js';
 import { roundMoney } from '../../shared/money.js';
 import {
   paymentSummaryForOrder,
@@ -62,6 +63,7 @@ async function replaceOrderItems(
         throw AppError.notFound('Order item not found');
       }
       const resolved = await resolveItemInput(itemInput, item);
+      item.recipeId = resolved.recipeId;
       item.description = resolved.description;
       item.quantity = resolved.quantity;
       item.unitPrice = resolved.unitPrice;
@@ -123,17 +125,23 @@ async function resolveItemInput(
   input: OrderItemBody | UpdateOrderItemBody,
   existing?: OrderItem,
 ): Promise<{
+  recipeId: string | null;
   description: string;
   quantity: number;
   unitPrice: string;
   notes: string | null;
 }> {
-  const description = input.description ?? existing?.description;
+  const recipeId =
+    input.recipeId === undefined ? (existing?.recipeId ?? null) : input.recipeId;
+  const recipe = recipeId ? await getRecipePrice(recipeId) : null;
+  const description = input.description ?? recipe?.name ?? existing?.description;
   const unitPrice =
     input.unitPrice === undefined
-      ? existing
-        ? Number(existing.unitPrice)
-        : 0
+      ? recipe
+        ? recipe.price
+        : existing
+          ? Number(existing.unitPrice)
+          : 0
       : input.unitPrice;
   const quantity = input.quantity ?? existing?.quantity;
   const notes = input.notes === undefined ? (existing?.notes ?? null) : input.notes;
@@ -146,6 +154,7 @@ async function resolveItemInput(
   }
 
   return {
+    recipeId,
     description,
     quantity,
     unitPrice: unitPrice.toFixed(2),
@@ -264,7 +273,11 @@ export async function getOrderRecord(orderId: string, transaction?: Transaction)
   const order = await Order.findByPk(orderId, {
     include: [
       { model: Client, as: 'client' },
-      { model: OrderItem, as: 'items' },
+      {
+        model: OrderItem,
+        as: 'items',
+        include: [{ model: Recipe, as: 'recipe' }],
+      },
       {
         model: Payment,
         as: 'payments',
@@ -374,6 +387,7 @@ export async function updateOrderItem(
       throw AppError.notFound('Order item not found');
     }
     const resolved = await resolveItemInput(input, item);
+    item.recipeId = resolved.recipeId;
     item.description = resolved.description;
     item.quantity = resolved.quantity;
     item.unitPrice = resolved.unitPrice;

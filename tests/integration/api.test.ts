@@ -389,4 +389,71 @@ describe('Algo Rico API', () => {
     expect(updated.body.data.totalAmount).toBe(12000);
     expect(updated.body.data.remainingBalance).toBe(12000);
   });
+
+  it('costs recipes from ingredients and orders from recipe quantity', async ({ skip }) => {
+    if (!dbAvailable) skip();
+
+    const agent = request.agent(app);
+    const loginResponse = await agent.post('/api/auth/login').send({
+      email: 'owner@algorico.local',
+      password: 'AlgoRicoDev1!',
+    });
+    expect(loginResponse.status).toBe(200);
+    const csrfToken = loginResponse.body.data.csrfToken as string;
+
+    const flour = await agent.post('/api/ingredients').set('x-csrf-token', csrfToken).send({
+      name: 'Harina',
+      unit: 'kg',
+      pricePerUnit: 100,
+    });
+    expect(flour.status).toBe(201);
+    expect(flour.body.data.pricePerUnit).toBe(100);
+    expect(flour.body.data.packageQuantity).toBeUndefined();
+
+    const eggs = await agent.post('/api/ingredients').set('x-csrf-token', csrfToken).send({
+      name: 'Huevos',
+      unit: 'un',
+      pricePerUnit: 20,
+    });
+    expect(eggs.status).toBe(201);
+    expect(eggs.body.data.pricePerUnit).toBe(20);
+
+    const recipe = await agent.post('/api/recipes').set('x-csrf-token', csrfToken).send({
+      name: 'Torta simple',
+      ingredients: [
+        { ingredientId: flour.body.data.id, quantity: 0.5 },
+        { ingredientId: eggs.body.data.id, quantity: 4 },
+      ],
+    });
+    expect(recipe.status).toBe(201);
+    expect(recipe.body.data.price).toBe(130);
+    expect(recipe.body.data.ingredients).toHaveLength(2);
+
+    const blockedIngredient = await agent
+      .delete(`/api/ingredients/${flour.body.data.id as string}`)
+      .set('x-csrf-token', csrfToken);
+    expect(blockedIngredient.status).toBe(409);
+
+    const client = await agent.post('/api/clients').set('x-csrf-token', csrfToken).send({ name: 'Nora Cake' });
+    expect(client.status).toBe(201);
+
+    const order = await agent
+      .post(`/api/clients/${client.body.data.id as string}/orders`)
+      .set('x-csrf-token', csrfToken)
+      .send({
+        eventDate: '2026-11-01',
+        items: [{ recipeId: recipe.body.data.id, quantity: 2 }],
+      });
+    expect(order.status).toBe(201);
+    expect(order.body.data.totalAmount).toBe(260);
+    expect(order.body.data.items[0].recipeId).toBe(recipe.body.data.id);
+    expect(order.body.data.items[0].description).toBe('Torta simple');
+    expect(order.body.data.items[0].unitPrice).toBe(130);
+    expect(order.body.data.items[0].lineTotal).toBe(260);
+
+    const blockedRecipe = await agent
+      .delete(`/api/recipes/${recipe.body.data.id as string}`)
+      .set('x-csrf-token', csrfToken);
+    expect(blockedRecipe.status).toBe(409);
+  });
 });

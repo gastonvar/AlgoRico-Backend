@@ -10,9 +10,11 @@ import { authRoutes } from './features/auth/auth.routes.js';
 import { calendarRoutes } from './features/calendar/calendar.routes.js';
 import { clientsRoutes } from './features/clients/clients.routes.js';
 import { dashboardRoutes } from './features/dashboard/dashboard.routes.js';
+import { ingredientsRoutes } from './features/ingredients/ingredients.routes.js';
 import { interactionsRoutes } from './features/interactions/interactions.routes.js';
 import { ordersRoutes } from './features/orders/orders.routes.js';
 import { orderPaymentsRoutes, paymentsRoutes } from './features/payments/payments.routes.js';
+import { recipesRoutes } from './features/recipes/recipes.routes.js';
 import { tasksRoutes } from './features/tasks/tasks.routes.js';
 import { pinoLogger } from './lib/pino.js';
 import { requireAuth, requireCsrf } from './middleware/auth.js';
@@ -76,6 +78,8 @@ export function createApp() {
   api.use(requireCsrf);
 
   api.use('/clients', clientsRoutes);
+  api.use('/ingredients', ingredientsRoutes);
+  api.use('/recipes', recipesRoutes);
   api.use('/interactions', interactionsRoutes);
   api.use('/interactions/:interactionId/attachments', interactionAttachmentsRoutes);
   api.use('/attachments', attachmentsRoutes);

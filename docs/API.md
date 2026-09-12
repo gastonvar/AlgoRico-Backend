@@ -70,6 +70,60 @@ Any subset of client fields. `archived: true` archives the client instead of del
 
 ---
 
+## Ingredients
+
+Catalog items used by recipes. Each ingredient has a `unit` and a `pricePerUnit`. Quantity belongs on the recipe line, not the ingredient.
+
+Units: `g`, `kg`, `ml`, `l`, `un`.
+
+### `GET /api/ingredients`
+
+Query: `page`, `pageSize`, `q` (name search)
+
+### `POST /api/ingredients`
+
+Body: `name`, `unit`, and `pricePerUnit` required; `notes` optional.
+
+Response `201`.
+
+### `GET /api/ingredients/:ingredientId`
+
+### `PATCH /api/ingredients/:ingredientId`
+
+Any subset of ingredient fields.
+
+### `DELETE /api/ingredients/:ingredientId`
+
+Rejected with `409` if the ingredient is used in a recipe.
+
+---
+
+## Recipes
+
+A recipe has ingredients with quantities. `price` is computed as the sum of each ingredient's `pricePerUnit × quantity`. It is not stored.
+
+### `GET /api/recipes`
+
+Query: `page`, `pageSize`, `q` (name search). Each recipe includes `price` and `ingredients[]`.
+
+### `POST /api/recipes`
+
+Body: `name` required; `description`, `notes` optional; `ingredients` required (at least one). Each line: `{ "ingredientId", "quantity", "notes?" }`. Duplicate ingredients in the same recipe return `422`.
+
+Response `201` includes computed `price` and nested ingredients.
+
+### `GET /api/recipes/:recipeId`
+
+### `PATCH /api/recipes/:recipeId`
+
+Sending `ingredients` replaces the full list.
+
+### `DELETE /api/recipes/:recipeId`
+
+Rejected with `409` if the recipe is used in an order.
+
+---
+
 ## Interactions
 
 ### `GET /api/clients/:clientId/interactions`
@@ -136,7 +190,7 @@ Query: `page`, `pageSize`, `status`, `paymentStatus`, `fulfillmentType`, `client
 
 ### `POST /api/clients/:clientId/orders`
 
-Body may include `totalAmount` and `items[]` with `description`, `quantity`, and optional `unitPrice`.
+Body may include `totalAmount` and `items[]` with `recipeId` and `quantity`. `description` and `unitPrice` default to the recipe name and current recipe price when `recipeId` is sent. Free-text `description` items remain allowed. On create, `totalAmount` defaults to quantity × item unit prices (recipe price × quantity when priced from a recipe).
 
 ### `GET /api/orders/:orderId`
 

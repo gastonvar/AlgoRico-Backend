@@ -25,3 +25,19 @@ export function sumMoney(values: Array<number | string>): number {
 export function lineTotal(quantity: number, unitPrice: number | string): number {
   return fromCents(toCents(unitPrice) * quantity);
 }
+
+export function roundUnitPrice(value: number | string): number {
+  const amount = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(amount)) {
+    throw AppError.validation('Invalid monetary amount');
+  }
+  return Number(amount.toFixed(4));
+}
+
+export function quantityCost(quantity: number | string, unitPrice: number | string): number {
+  const amount = typeof quantity === 'number' ? quantity : Number(quantity);
+  if (!Number.isFinite(amount)) {
+    throw AppError.validation('Invalid quantity');
+  }
+  return roundMoney(amount * Number(unitPrice));
+}

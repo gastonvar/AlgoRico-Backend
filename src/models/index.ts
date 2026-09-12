@@ -1,10 +1,13 @@
 import { sequelize } from '../database/sequelize.js';
 import { Attachment, initAttachmentModel } from './attachment.js';
 import { Client, initClientModel } from './client.js';
+import { Ingredient, initIngredientModel } from './ingredient.js';
 import { Interaction, initInteractionModel } from './interaction.js';
 import { Order, initOrderModel } from './order.js';
 import { OrderItem, initOrderItemModel } from './order-item.js';
 import { Payment, initPaymentModel } from './payment.js';
+import { Recipe, initRecipeModel } from './recipe.js';
+import { RecipeIngredient, initRecipeIngredientModel } from './recipe-ingredient.js';
 import { Session, initSessionModel } from './session.js';
 import { Task, initTaskModel } from './task.js';
 import { User, initUserModel } from './user.js';
@@ -21,6 +24,9 @@ export function initModels(): void {
   initClientModel(sequelize);
   initInteractionModel(sequelize);
   initAttachmentModel(sequelize);
+  initIngredientModel(sequelize);
+  initRecipeModel(sequelize);
+  initRecipeIngredientModel(sequelize);
   initOrderModel(sequelize);
   initOrderItemModel(sequelize);
   initPaymentModel(sequelize);
@@ -53,6 +59,15 @@ export function initModels(): void {
   Order.hasMany(OrderItem, { foreignKey: 'orderId', as: 'items' });
   OrderItem.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 
+  Recipe.hasMany(OrderItem, { foreignKey: 'recipeId', as: 'orderItems' });
+  OrderItem.belongsTo(Recipe, { foreignKey: 'recipeId', as: 'recipe' });
+
+  Recipe.hasMany(RecipeIngredient, { foreignKey: 'recipeId', as: 'ingredients' });
+  RecipeIngredient.belongsTo(Recipe, { foreignKey: 'recipeId', as: 'recipe' });
+
+  Ingredient.hasMany(RecipeIngredient, { foreignKey: 'ingredientId', as: 'recipeIngredients' });
+  RecipeIngredient.belongsTo(Ingredient, { foreignKey: 'ingredientId', as: 'ingredient' });
+
   Order.hasMany(Payment, { foreignKey: 'orderId', as: 'payments' });
   Payment.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 
@@ -68,10 +83,13 @@ export function initModels(): void {
 export {
   Attachment,
   Client,
+  Ingredient,
   Interaction,
   Order,
   OrderItem,
   Payment,
+  Recipe,
+  RecipeIngredient,
   Session,
   Task,
   User,

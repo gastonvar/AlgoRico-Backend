@@ -4,13 +4,21 @@ import type { Client } from '../../models/client.js';
 import type { Order } from '../../models/order.js';
 import type { OrderItem } from '../../models/order-item.js';
 import type { Payment } from '../../models/payment.js';
+import type { Recipe } from '../../models/recipe.js';
 import type { PaymentSummary } from '../../shared/payments.js';
 import { toPublicAttachment, type PublicAttachment } from '../attachments/attachments.mappers.js';
 import { toPublicClient, type PublicClient } from '../clients/clients.mappers.js';
 
+export type PublicOrderRecipe = {
+  id: string;
+  name: string;
+};
+
 export type PublicOrderItem = {
   id: string;
   orderId: string;
+  recipeId: string | null;
+  recipe: PublicOrderRecipe | null;
   description: string;
   quantity: number;
   unitPrice: number;
@@ -58,9 +66,12 @@ export type PublicOrder = {
 
 export function toPublicOrderItem(item: OrderItem): PublicOrderItem {
   const unitPrice = roundMoney(item.unitPrice);
+  const recipe = (item.get('recipe') as Recipe | undefined) ?? null;
   return {
     id: item.id,
     orderId: item.orderId,
+    recipeId: item.recipeId,
+    recipe: recipe ? { id: recipe.id, name: recipe.name } : null,
     description: item.description,
     quantity: item.quantity,
     unitPrice,
