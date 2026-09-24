@@ -43,6 +43,7 @@ async function deleteStoredObjects(
 
 async function replaceOrderItems(
   orderId: string,
+  companyId: string,
   items: ReplaceOrderItemBody[],
   transaction: Transaction,
 ): Promise<void> {
@@ -62,7 +63,7 @@ async function replaceOrderItems(
       if (!item) {
         throw AppError.notFound('Order item not found');
       }
-      const resolved = await resolveItemInput(itemInput, item);
+      const resolved = await resolveItemInput(itemInput, companyId, item);
       item.recipeId = resolved.recipeId;
       item.description = resolved.description;
       item.quantity = resolved.quantity;
@@ -70,7 +71,7 @@ async function replaceOrderItems(
       item.notes = resolved.notes;
       await item.save({ transaction });
     } else {
-      const resolved = await resolveItemInput(itemInput);
+      const resolved = await resolveItemInput(itemInput, companyId);
       await OrderItem.create({ orderId, ...resolved }, { transaction });
     }
   }
@@ -80,8 +81,8 @@ function paidAmountSql(): string {
   return `COALESCE((SELECT SUM(payments.amount) FROM payments WHERE payments.order_id = "Order"."id"), 0)`;
 }
 
-function listWhere(query: ListOrdersQuery): WhereOptions {
-  const clauses: WhereOptions[] = [];
+function listWhere(companyId: string, query: ListOrdersQuery): WhereOptions {
+  const clauses: WhereOptions[] = [{ companyId }];
 
   if (query.status) {
     clauses.push({ status: query.status });
@@ -112,17 +113,12 @@ function listWhere(query: ListOrdersQuery): WhereOptions {
     clauses.push(literal(`(${paid} >= "Order"."total_amount")`));
   }
 
-  if (clauses.length === 0) {
-    return {};
-  }
-  if (clauses.length === 1) {
-    return clauses[0] ?? {};
-  }
   return { [Op.and]: clauses };
 }
 
 async function resolveItemInput(
   input: OrderItemBody | UpdateOrderItemBody,
+  companyId: string,
   existing?: OrderItem,
 ): Promise<{
   recipeId: string | null;
@@ -133,7 +129,7 @@ async function resolveItemInput(
 }> {
   const recipeId =
     input.recipeId === undefined ? (existing?.recipeId ?? null) : input.recipeId;
-  const recipe = recipeId ? await getRecipePrice(recipeId) : null;
+  const recipe = recipeId ? await getRecipePrice(recipeId, companyId) : null;
   const description = input.description ?? recipe?.name ?? existing?.description;
   const unitPrice =
     input.unitPrice === undefined
@@ -178,9 +174,10 @@ async function applyOrderTotal(
 
 export async function createOrder(
   clientId: string,
+  companyId: string,
   input: CreateOrderBody,
 ): Promise<PublicOrder> {
-  await getClientById(clientId);
+  await getClientById(clientId, companyId);
 
   const fulfillmentType = input.fulfillmentType ?? 'PICKUP';
   const status = input.status ?? 'LEAD';
@@ -189,6 +186,7 @@ export async function createOrder(
   const order = await sequelize.transaction(async (transaction) => {
     const created = await Order.create(
       {
+        companyId,
         clientId,
         status,
         eventDate: input.eventDate ?? null,
@@ -204,7 +202,7 @@ export async function createOrder(
     );
 
     for (const item of input.items ?? []) {
-      const resolved = await resolveItemInput(item);
+      const resolved = await resolveItemInput(item, companyId);
       await OrderItem.create(
         {
           orderId: created.id,
@@ -220,10 +218,13 @@ export async function createOrder(
     return created;
   });
 
-  return getOrder(order.id);
+  return getOrder(order.id, companyId);
 }
 
-export async function listOrders(query: ListOrdersQuery): Promise<{
+export async function listOrders(
+  companyId: string,
+  query: ListOrdersQuery,
+): Promise<{
   data: PublicOrder[];
   meta: ReturnType<typeof paginationMeta>;
 }> {
@@ -246,7 +247,7 @@ export async function listOrders(query: ListOrdersQuery): Promise<{
   ];
 
   const { rows, count } = await Order.findAndCountAll({
-    where: listWhere(query),
+    where: listWhere(companyId, query),
     include,
     order: [
       ['eventDate', 'ASC'],
@@ -269,8 +270,13 @@ export async function listOrders(query: ListOrdersQuery): Promise<{
   };
 }
 
-export async function getOrderRecord(orderId: string, transaction?: Transaction): Promise<Order> {
-  const order = await Order.findByPk(orderId, {
+export async function getOrderRecord(
+  orderId: string,
+  companyId: string,
+  transaction?: Transaction,
+): Promise<Order> {
+  const order = await Order.findOne({
+    where: { id: orderId, companyId },
     include: [
       { model: Client, as: 'client' },
       {
@@ -296,15 +302,19 @@ export async function getOrderRecord(orderId: string, transaction?: Transaction)
   return order;
 }
 
-export async function getOrder(orderId: string): Promise<PublicOrder> {
-  const order = await getOrderRecord(orderId);
+export async function getOrder(orderId: string, companyId: string): Promise<PublicOrder> {
+  const order = await getOrderRecord(orderId, companyId);
   const summary = await paymentSummaryForOrder(order.id, order.totalAmount);
   return toPublicOrder(order, summary);
 }
 
-export async function updateOrder(orderId: string, input: UpdateOrderBody): Promise<PublicOrder> {
+export async function updateOrder(
+  orderId: string,
+  companyId: string,
+  input: UpdateOrderBody,
+): Promise<PublicOrder> {
   const order = await sequelize.transaction(async (transaction) => {
-    const current = await Order.findByPk(orderId, { transaction });
+    const current = await Order.findOne({ where: { id: orderId, companyId }, transaction });
     if (!current) {
       throw AppError.notFound('Order not found');
     }
@@ -325,7 +335,7 @@ export async function updateOrder(orderId: string, input: UpdateOrderBody): Prom
     assertFulfillmentStatus(current.status, current.fulfillmentType);
 
     if (input.items !== undefined) {
-      await replaceOrderItems(current.id, input.items, transaction);
+      await replaceOrderItems(current.id, companyId, input.items, transaction);
     }
 
     if (input.totalAmount !== undefined) {
@@ -336,11 +346,11 @@ export async function updateOrder(orderId: string, input: UpdateOrderBody): Prom
     return current;
   });
 
-  return getOrder(order.id);
+  return getOrder(order.id, companyId);
 }
 
-export async function deleteOrder(orderId: string): Promise<void> {
-  const order = await getOrderRecord(orderId);
+export async function deleteOrder(orderId: string, companyId: string): Promise<void> {
+  const order = await getOrderRecord(orderId, companyId);
   const payments = (order.get('payments') as Payment[] | undefined) ?? [];
   const storageKeys = payments.flatMap((payment) => {
     const attachments = (payment.get('attachments') as Attachment[] | undefined) ?? [];
@@ -359,26 +369,31 @@ export async function deleteOrder(orderId: string): Promise<void> {
   await deleteStoredObjects(storageKeys, { orderId });
 }
 
-export async function addOrderItem(orderId: string, input: OrderItemBody): Promise<PublicOrder> {
+export async function addOrderItem(
+  orderId: string,
+  companyId: string,
+  input: OrderItemBody,
+): Promise<PublicOrder> {
   await sequelize.transaction(async (transaction) => {
-    const order = await Order.findByPk(orderId, { transaction });
+    const order = await Order.findOne({ where: { id: orderId, companyId }, transaction });
     if (!order) {
       throw AppError.notFound('Order not found');
     }
-    const resolved = await resolveItemInput(input);
+    const resolved = await resolveItemInput(input, companyId);
     await OrderItem.create({ orderId: order.id, ...resolved }, { transaction });
   });
 
-  return getOrder(orderId);
+  return getOrder(orderId, companyId);
 }
 
 export async function updateOrderItem(
   orderId: string,
+  companyId: string,
   itemId: string,
   input: UpdateOrderItemBody,
 ): Promise<PublicOrder> {
   await sequelize.transaction(async (transaction) => {
-    const order = await Order.findByPk(orderId, { transaction });
+    const order = await Order.findOne({ where: { id: orderId, companyId }, transaction });
     if (!order) {
       throw AppError.notFound('Order not found');
     }
@@ -386,7 +401,7 @@ export async function updateOrderItem(
     if (!item) {
       throw AppError.notFound('Order item not found');
     }
-    const resolved = await resolveItemInput(input, item);
+    const resolved = await resolveItemInput(input, companyId, item);
     item.recipeId = resolved.recipeId;
     item.description = resolved.description;
     item.quantity = resolved.quantity;
@@ -395,12 +410,16 @@ export async function updateOrderItem(
     await item.save({ transaction });
   });
 
-  return getOrder(orderId);
+  return getOrder(orderId, companyId);
 }
 
-export async function deleteOrderItem(orderId: string, itemId: string): Promise<PublicOrder> {
+export async function deleteOrderItem(
+  orderId: string,
+  companyId: string,
+  itemId: string,
+): Promise<PublicOrder> {
   await sequelize.transaction(async (transaction) => {
-    const order = await Order.findByPk(orderId, { transaction });
+    const order = await Order.findOne({ where: { id: orderId, companyId }, transaction });
     if (!order) {
       throw AppError.notFound('Order not found');
     }
@@ -412,5 +431,5 @@ export async function deleteOrderItem(orderId: string, itemId: string): Promise<
     await item.destroy({ transaction });
   });
 
-  return getOrder(orderId);
+  return getOrder(orderId, companyId);
 }

@@ -1,6 +1,7 @@
 import { hashPassword } from '../lib/crypto.js';
 import { pinoLogger } from '../lib/pino.js';
 import { User, initModels } from '../models/index.js';
+import { ALGORICO_COMPANY_ID } from '../shared/companies.js';
 import { sequelize } from './sequelize.js';
 
 initModels();
@@ -29,6 +30,7 @@ async function createOwner(): Promise<void> {
     email,
     passwordHash: await hashPassword(password),
     active: true,
+    companyId: ALGORICO_COMPANY_ID,
   });
 
   pinoLogger.info({ email }, 'Created initial owner user');

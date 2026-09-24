@@ -31,11 +31,15 @@ function dueWhere(due: ListTasksQuery['due']): WhereOptions {
   return {};
 }
 
-export async function listTasks(query: ListTasksQuery): Promise<{
+export async function listTasks(
+  companyId: string,
+  query: ListTasksQuery,
+): Promise<{
   data: PublicTask[];
   meta: ReturnType<typeof paginationMeta>;
 }> {
   const where: WhereOptions = {
+    companyId,
     ...dueWhere(query.due),
     ...(query.completed !== undefined
       ? { completed: query.completed }
@@ -67,24 +71,33 @@ export async function listTasks(query: ListTasksQuery): Promise<{
   };
 }
 
-async function assertTaskRelations(clientId: string | null, orderId: string | null): Promise<void> {
+async function assertTaskRelations(
+  clientId: string | null,
+  orderId: string | null,
+  companyId: string,
+): Promise<void> {
   if (clientId) {
-    await getClientById(clientId, { includeArchived: true });
+    await getClientById(clientId, companyId, { includeArchived: true });
   }
   if (orderId) {
-    const order = await getOrderRecord(orderId);
+    const order = await getOrderRecord(orderId, companyId);
     if (clientId && order.clientId !== clientId) {
       throw AppError.conflict('Task order does not belong to the selected client');
     }
   }
 }
 
-export async function createTask(userId: string, input: CreateTaskBody): Promise<PublicTask> {
+export async function createTask(
+  userId: string,
+  companyId: string,
+  input: CreateTaskBody,
+): Promise<PublicTask> {
   const clientId = input.clientId ?? null;
   const orderId = input.orderId ?? null;
-  await assertTaskRelations(clientId, orderId);
+  await assertTaskRelations(clientId, orderId, companyId);
 
   const task = await Task.create({
+    companyId,
     clientId,
     orderId,
     title: input.title,
@@ -94,26 +107,30 @@ export async function createTask(userId: string, input: CreateTaskBody): Promise
     createdBy: userId,
   });
 
-  return getTask(task.id);
+  return getTask(task.id, companyId);
 }
 
-export async function getTask(taskId: string): Promise<PublicTask> {
-  const task = await Task.findByPk(taskId, { include: taskInclude });
+export async function getTask(taskId: string, companyId: string): Promise<PublicTask> {
+  const task = await Task.findOne({ where: { id: taskId, companyId }, include: taskInclude });
   if (!task) {
     throw AppError.notFound('Task not found');
   }
   return toPublicTask(task);
 }
 
-export async function updateTask(taskId: string, input: UpdateTaskBody): Promise<PublicTask> {
-  const task = await Task.findByPk(taskId);
+export async function updateTask(
+  taskId: string,
+  companyId: string,
+  input: UpdateTaskBody,
+): Promise<PublicTask> {
+  const task = await Task.findOne({ where: { id: taskId, companyId } });
   if (!task) {
     throw AppError.notFound('Task not found');
   }
 
   const nextClientId = input.clientId === undefined ? task.clientId : input.clientId;
   const nextOrderId = input.orderId === undefined ? task.orderId : input.orderId;
-  await assertTaskRelations(nextClientId, nextOrderId);
+  await assertTaskRelations(nextClientId, nextOrderId, companyId);
 
   if (input.clientId !== undefined) task.clientId = input.clientId;
   if (input.orderId !== undefined) task.orderId = input.orderId;
@@ -127,11 +144,11 @@ export async function updateTask(taskId: string, input: UpdateTaskBody): Promise
   }
 
   await task.save();
-  return getTask(task.id);
+  return getTask(task.id, companyId);
 }
 
-export async function deleteTask(taskId: string): Promise<void> {
-  const task = await Task.findByPk(taskId);
+export async function deleteTask(taskId: string, companyId: string): Promise<void> {
+  const task = await Task.findOne({ where: { id: taskId, companyId } });
   if (!task) {
     throw AppError.notFound('Task not found');
   }

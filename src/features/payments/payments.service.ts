@@ -11,8 +11,8 @@ import { getOrder, getOrderRecord } from '../orders/orders.service.js';
 import { toPublicPayment, type PublicOrder, type PublicPayment } from '../orders/orders.mappers.js';
 import type { CreatePaymentBody, UpdatePaymentBody } from './payments.schemas.js';
 
-export async function listOrderPayments(orderId: string): Promise<PublicPayment[]> {
-  await getOrderRecord(orderId);
+export async function listOrderPayments(orderId: string, companyId: string): Promise<PublicPayment[]> {
+  await getOrderRecord(orderId, companyId);
   const payments = await Payment.findAll({
     where: { orderId },
     include: [{ model: Attachment, as: 'attachments' }],
@@ -26,15 +26,17 @@ export async function listOrderPayments(orderId: string): Promise<PublicPayment[
 
 export async function registerPayment(
   orderId: string,
+  companyId: string,
   input: CreatePaymentBody,
 ): Promise<PublicOrder> {
   await sequelize.transaction(async (transaction) => {
-    const order = await getOrderRecord(orderId, transaction);
+    const order = await getOrderRecord(orderId, companyId, transaction);
     const summary = await paymentSummaryForOrder(order.id, order.totalAmount, transaction);
     assertPaymentDoesNotOverpay(summary.remainingBalance, input.amount);
 
     await Payment.create(
       {
+        companyId,
         orderId: order.id,
         type: input.type,
         amount: input.amount.toFixed(2),
@@ -53,11 +55,16 @@ export async function registerPayment(
     }
   });
 
-  return getOrder(orderId);
+  return getOrder(orderId, companyId);
 }
 
-async function getPaymentRecord(paymentId: string, transaction?: Transaction): Promise<Payment> {
-  const payment = await Payment.findByPk(paymentId, {
+async function getPaymentRecord(
+  paymentId: string,
+  companyId: string,
+  transaction?: Transaction,
+): Promise<Payment> {
+  const payment = await Payment.findOne({
+    where: { id: paymentId, companyId },
     include: [{ model: Attachment, as: 'attachments' }],
     transaction,
   });
@@ -67,18 +74,19 @@ async function getPaymentRecord(paymentId: string, transaction?: Transaction): P
   return payment;
 }
 
-export async function getPayment(paymentId: string): Promise<PublicPayment> {
-  const payment = await getPaymentRecord(paymentId);
+export async function getPayment(paymentId: string, companyId: string): Promise<PublicPayment> {
+  const payment = await getPaymentRecord(paymentId, companyId);
   return toPublicPayment(payment);
 }
 
 export async function updatePayment(
   paymentId: string,
+  companyId: string,
   input: UpdatePaymentBody,
 ): Promise<PublicOrder> {
   const orderId = await sequelize.transaction(async (transaction) => {
-    const payment = await getPaymentRecord(paymentId, transaction);
-    const order = await getOrderRecord(payment.orderId, transaction);
+    const payment = await getPaymentRecord(paymentId, companyId, transaction);
+    const order = await getOrderRecord(payment.orderId, companyId, transaction);
     const summary = await paymentSummaryForOrder(order.id, order.totalAmount, transaction);
 
     if (input.amount !== undefined) {
@@ -95,11 +103,11 @@ export async function updatePayment(
     return payment.orderId;
   });
 
-  return getOrder(orderId);
+  return getOrder(orderId, companyId);
 }
 
-export async function deletePayment(paymentId: string): Promise<PublicOrder> {
-  const payment = await getPaymentRecord(paymentId);
+export async function deletePayment(paymentId: string, companyId: string): Promise<PublicOrder> {
+  const payment = await getPaymentRecord(paymentId, companyId);
   const orderId = payment.orderId;
   const attachments = (payment.get('attachments') as Attachment[] | undefined) ?? [];
   const storageKeys = attachments.map((attachment) => attachment.storageKey);
@@ -120,5 +128,5 @@ export async function deletePayment(paymentId: string): Promise<PublicOrder> {
     }
   }
 
-  return getOrder(orderId);
+  return getOrder(orderId, companyId);
 }

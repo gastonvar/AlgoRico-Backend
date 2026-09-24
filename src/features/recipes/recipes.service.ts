@@ -21,13 +21,12 @@ const recipeInclude = [
   },
 ];
 
-function recipeSearchWhere(query: ListRecipesQuery): WhereOptions {
-  if (!query.q) {
-    return {};
+function recipeSearchWhere(companyId: string, query: ListRecipesQuery): WhereOptions {
+  const where: WhereOptions = { companyId };
+  if (query.q) {
+    where.name = { [Op.iLike]: `%${query.q}%` };
   }
-  return {
-    name: { [Op.iLike]: `%${query.q}%` },
-  };
+  return where;
 }
 
 async function assertUniqueIngredientIds(ingredients: RecipeIngredientBody[]): Promise<void> {
@@ -39,12 +38,13 @@ async function assertUniqueIngredientIds(ingredients: RecipeIngredientBody[]): P
 
 async function replaceRecipeIngredients(
   recipeId: string,
+  companyId: string,
   ingredients: ReplaceRecipeIngredientBody[],
   transaction: Transaction,
 ): Promise<void> {
   await assertUniqueIngredientIds(ingredients);
   for (const line of ingredients) {
-    await getIngredientById(line.ingredientId);
+    await getIngredientById(line.ingredientId, companyId);
   }
 
   await RecipeIngredient.destroy({ where: { recipeId }, transaction });
@@ -59,13 +59,16 @@ async function replaceRecipeIngredients(
   );
 }
 
-export async function listRecipes(query: ListRecipesQuery): Promise<{
+export async function listRecipes(
+  companyId: string,
+  query: ListRecipesQuery,
+): Promise<{
   data: PublicRecipe[];
   meta: ReturnType<typeof paginationMeta>;
 }> {
   const { limit, offset } = paginationOffset(query);
   const { rows, count } = await Recipe.findAndCountAll({
-    where: recipeSearchWhere(query),
+    where: recipeSearchWhere(companyId, query),
     include: recipeInclude,
     order: [['name', 'ASC']],
     limit,
@@ -79,8 +82,13 @@ export async function listRecipes(query: ListRecipesQuery): Promise<{
   };
 }
 
-export async function getRecipeRecord(recipeId: string, transaction?: Transaction): Promise<Recipe> {
-  const recipe = await Recipe.findByPk(recipeId, {
+export async function getRecipeRecord(
+  recipeId: string,
+  companyId: string,
+  transaction?: Transaction,
+): Promise<Recipe> {
+  const recipe = await Recipe.findOne({
+    where: { id: recipeId, companyId },
     include: recipeInclude,
     order: [[{ model: RecipeIngredient, as: 'ingredients' }, 'createdAt', 'ASC']],
     transaction,
@@ -91,24 +99,28 @@ export async function getRecipeRecord(recipeId: string, transaction?: Transactio
   return recipe;
 }
 
-export async function getRecipe(recipeId: string): Promise<PublicRecipe> {
-  return toPublicRecipe(await getRecipeRecord(recipeId));
+export async function getRecipe(recipeId: string, companyId: string): Promise<PublicRecipe> {
+  return toPublicRecipe(await getRecipeRecord(recipeId, companyId));
 }
 
-export async function getRecipePrice(recipeId: string): Promise<{ name: string; price: number }> {
-  const recipe = await getRecipe(recipeId);
+export async function getRecipePrice(
+  recipeId: string,
+  companyId: string,
+): Promise<{ name: string; price: number }> {
+  const recipe = await getRecipe(recipeId, companyId);
   return { name: recipe.name, price: recipe.price };
 }
 
-export async function createRecipe(input: CreateRecipeBody): Promise<PublicRecipe> {
+export async function createRecipe(companyId: string, input: CreateRecipeBody): Promise<PublicRecipe> {
   await assertUniqueIngredientIds(input.ingredients);
   for (const line of input.ingredients) {
-    await getIngredientById(line.ingredientId);
+    await getIngredientById(line.ingredientId, companyId);
   }
 
   const recipe = await sequelize.transaction(async (transaction) => {
     const created = await Recipe.create(
       {
+        companyId,
         name: input.name,
         description: input.description ?? null,
         notes: input.notes ?? null,
@@ -129,12 +141,16 @@ export async function createRecipe(input: CreateRecipeBody): Promise<PublicRecip
     return created;
   });
 
-  return getRecipe(recipe.id);
+  return getRecipe(recipe.id, companyId);
 }
 
-export async function updateRecipe(recipeId: string, input: UpdateRecipeBody): Promise<PublicRecipe> {
+export async function updateRecipe(
+  recipeId: string,
+  companyId: string,
+  input: UpdateRecipeBody,
+): Promise<PublicRecipe> {
   await sequelize.transaction(async (transaction) => {
-    const recipe = await Recipe.findByPk(recipeId, { transaction });
+    const recipe = await Recipe.findOne({ where: { id: recipeId, companyId }, transaction });
     if (!recipe) {
       throw AppError.notFound('Recipe not found');
     }
@@ -145,15 +161,15 @@ export async function updateRecipe(recipeId: string, input: UpdateRecipeBody): P
     await recipe.save({ transaction });
 
     if (input.ingredients !== undefined) {
-      await replaceRecipeIngredients(recipe.id, input.ingredients, transaction);
+      await replaceRecipeIngredients(recipe.id, companyId, input.ingredients, transaction);
     }
   });
 
-  return getRecipe(recipeId);
+  return getRecipe(recipeId, companyId);
 }
 
-export async function deleteRecipe(recipeId: string): Promise<void> {
-  const recipe = await getRecipeRecord(recipeId);
+export async function deleteRecipe(recipeId: string, companyId: string): Promise<void> {
+  const recipe = await getRecipeRecord(recipeId, companyId);
   const usedCount = await OrderItem.count({ where: { recipeId } });
   if (usedCount > 0) {
     throw AppError.conflict('Recipe is used in orders');

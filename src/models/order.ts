@@ -4,6 +4,7 @@ import type { FulfillmentType, OrderStatus } from '../shared/constants.js';
 
 export type OrderAttributes = {
   id: string;
+  companyId: string;
   clientId: string;
   status: OrderStatus;
   eventDate: string | null;
@@ -35,6 +36,7 @@ export type OrderCreationAttributes = Optional<
 
 export class Order extends Model<OrderAttributes, OrderCreationAttributes> {
   declare id: string;
+  declare companyId: string;
   declare clientId: string;
   declare status: OrderStatus;
   declare eventDate: string | null;
@@ -56,6 +58,10 @@ export function initOrderModel(sequelize: Sequelize): typeof Order {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
+      },
+      companyId: {
+        type: DataTypes.UUID,
+        allowNull: false,
       },
       clientId: {
         type: DataTypes.UUID,

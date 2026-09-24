@@ -5,6 +5,7 @@ import { migrator } from '../../src/database/migrator.js';
 import { sequelize } from '../../src/database/sequelize.js';
 import { hashPassword } from '../../src/lib/crypto.js';
 import { User, initModels } from '../../src/models/index.js';
+import { ALGORICO_COMPANY_ID } from '../../src/shared/companies.js';
 
 const TINY_PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==',
@@ -31,9 +32,10 @@ describe('Algo Rico API', () => {
       await sequelize.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
       await migrator.up();
       await User.create({
-        email: 'owner@algorico.local',
+        email: 'victoriavanoli@hotmail.com',
         passwordHash: await hashPassword('AlgoRicoDev1!'),
         active: true,
+        companyId: ALGORICO_COMPANY_ID,
       });
     } catch {
       dbAvailable = false;
@@ -55,16 +57,16 @@ describe('Algo Rico API', () => {
   it('logs in and returns the current user without a password hash', async ({ skip }) => {
     if (!dbAvailable) skip();
     const response = await request(app).post('/api/auth/login').send({
-      email: 'owner@algorico.local',
+      email: 'victoriavanoli@hotmail.com',
       password: 'AlgoRicoDev1!',
     });
     expect(response.status).toBe(200);
-    expect(response.body.data.user.email).toBe('owner@algorico.local');
+    expect(response.body.data.user.email).toBe('victoriavanoli@hotmail.com');
     expect(response.body.data.user.passwordHash).toBeUndefined();
 
     const me = await request(app).get('/api/auth/me').set('Cookie', cookieHeader(response));
     expect(me.status).toBe(200);
-    expect(me.body.data.user.email).toBe('owner@algorico.local');
+    expect(me.body.data.user.email).toBe('victoriavanoli@hotmail.com');
 
     const clients = await request(app)
       .get('/api/clients')
@@ -80,7 +82,7 @@ describe('Algo Rico API', () => {
 
     const agent = request.agent(app);
     const loginResponse = await agent.post('/api/auth/login').send({
-      email: 'owner@algorico.local',
+      email: 'victoriavanoli@hotmail.com',
       password: 'AlgoRicoDev1!',
     });
     expect(loginResponse.status).toBe(200);
@@ -356,7 +358,7 @@ describe('Algo Rico API', () => {
 
     const agent = request.agent(app);
     const loginResponse = await agent.post('/api/auth/login').send({
-      email: 'owner@algorico.local',
+      email: 'victoriavanoli@hotmail.com',
       password: 'AlgoRicoDev1!',
     });
     expect(loginResponse.status).toBe(200);
@@ -395,7 +397,7 @@ describe('Algo Rico API', () => {
 
     const agent = request.agent(app);
     const loginResponse = await agent.post('/api/auth/login').send({
-      email: 'owner@algorico.local',
+      email: 'victoriavanoli@hotmail.com',
       password: 'AlgoRicoDev1!',
     });
     expect(loginResponse.status).toBe(200);

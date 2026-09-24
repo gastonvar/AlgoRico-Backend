@@ -29,10 +29,15 @@ Public. Rate-limited.
 Body:
 
 ```json
-{ "email": "owner@algorico.local", "password": "AlgoRicoDev1!" }
+{ "email": "victoriavanoli@hotmail.com", "password": "AlgoRicoDev1!" }
 ```
 
-Response `200`: `{ "data": { "user": { "id", "email", "active", "createdAt", "updatedAt" }, "csrfToken": "..." } }`
+Response `200`: `{ "data": { "user": { "id", "email", "active", "company", "createdAt", "updatedAt" }, "csrfToken": "..." } }`
+
+`company` is `{ "id", "name", "slug", "subtitle", "logoMarkUrl", "logoWordmarkUrl" }`. Every user
+belongs to exactly one company; all business data (clients, orders, recipes,
+ingredients, tasks, interactions, payments, attachments) is scoped to the
+authenticated user's company and never visible across tenants.
 
 Errors: `401` invalid credentials, `429` too many attempts.
 

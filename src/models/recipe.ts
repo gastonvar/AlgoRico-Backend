@@ -3,6 +3,7 @@ import { DataTypes, Model, type Sequelize } from 'sequelize';
 
 export type RecipeAttributes = {
   id: string;
+  companyId: string;
   name: string;
   description: string | null;
   notes: string | null;
@@ -17,6 +18,7 @@ export type RecipeCreationAttributes = Optional<
 
 export class Recipe extends Model<RecipeAttributes, RecipeCreationAttributes> {
   declare id: string;
+  declare companyId: string;
   declare name: string;
   declare description: string | null;
   declare notes: string | null;
@@ -31,6 +33,10 @@ export function initRecipeModel(sequelize: Sequelize): typeof Recipe {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
+      },
+      companyId: {
+        type: DataTypes.UUID,
+        allowNull: false,
       },
       name: {
         type: DataTypes.STRING(255),

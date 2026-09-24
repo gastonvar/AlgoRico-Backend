@@ -8,8 +8,8 @@ import { getClientById } from '../clients/clients.service.js';
 import { toPublicInteraction, type PublicInteraction } from './interactions.mappers.js';
 import type { CreateInteractionBody, UpdateInteractionBody } from './interactions.schemas.js';
 
-async function getOrderById(orderId: string): Promise<Order> {
-  const order = await Order.findByPk(orderId);
+async function getOrderById(orderId: string, companyId: string): Promise<Order> {
+  const order = await Order.findOne({ where: { id: orderId, companyId } });
   if (!order) {
     throw AppError.notFound('Order not found');
   }
@@ -18,12 +18,13 @@ async function getOrderById(orderId: string): Promise<Order> {
 
 async function listInteractions(
   where: { clientId: string } | { orderId: string },
+  companyId: string,
   query: PaginationQuery,
 ): Promise<{ data: PublicInteraction[]; meta: ReturnType<typeof paginationMeta> }> {
   const { limit, offset } = paginationOffset(query);
 
   const { rows, count } = await Interaction.findAndCountAll({
-    where,
+    where: { ...where, companyId },
     include: [{ model: Attachment, as: 'attachments' }],
     order: [
       ['occurredAt', 'DESC'],
@@ -42,28 +43,32 @@ async function listInteractions(
 
 export async function listClientInteractions(
   clientId: string,
+  companyId: string,
   query: PaginationQuery,
 ): Promise<{ data: PublicInteraction[]; meta: ReturnType<typeof paginationMeta> }> {
-  await getClientById(clientId, { includeArchived: true });
-  return listInteractions({ clientId }, query);
+  await getClientById(clientId, companyId, { includeArchived: true });
+  return listInteractions({ clientId }, companyId, query);
 }
 
 export async function listOrderInteractions(
   orderId: string,
+  companyId: string,
   query: PaginationQuery,
 ): Promise<{ data: PublicInteraction[]; meta: ReturnType<typeof paginationMeta> }> {
-  await getOrderById(orderId);
-  return listInteractions({ orderId }, query);
+  await getOrderById(orderId, companyId);
+  return listInteractions({ orderId }, companyId, query);
 }
 
 export async function createInteraction(
   clientId: string,
   userId: string,
+  companyId: string,
   input: CreateInteractionBody,
   orderId?: string | null,
 ): Promise<PublicInteraction> {
-  await getClientById(clientId);
+  await getClientById(clientId, companyId);
   const interaction = await Interaction.create({
+    companyId,
     clientId,
     orderId: orderId ?? null,
     userId,
@@ -78,14 +83,16 @@ export async function createInteraction(
 export async function createOrderInteraction(
   orderId: string,
   userId: string,
+  companyId: string,
   input: CreateInteractionBody,
 ): Promise<PublicInteraction> {
-  const order = await getOrderById(orderId);
-  return createInteraction(order.clientId, userId, input, order.id);
+  const order = await getOrderById(orderId, companyId);
+  return createInteraction(order.clientId, userId, companyId, input, order.id);
 }
 
-export async function getInteractionById(interactionId: string): Promise<Interaction> {
-  const interaction = await Interaction.findByPk(interactionId, {
+export async function getInteractionById(interactionId: string, companyId: string): Promise<Interaction> {
+  const interaction = await Interaction.findOne({
+    where: { id: interactionId, companyId },
     include: [{ model: Attachment, as: 'attachments' }],
   });
   if (!interaction) {
@@ -94,16 +101,17 @@ export async function getInteractionById(interactionId: string): Promise<Interac
   return interaction;
 }
 
-export async function getInteraction(interactionId: string): Promise<PublicInteraction> {
-  const interaction = await getInteractionById(interactionId);
+export async function getInteraction(interactionId: string, companyId: string): Promise<PublicInteraction> {
+  const interaction = await getInteractionById(interactionId, companyId);
   return toPublicInteraction(interaction);
 }
 
 export async function updateInteraction(
   interactionId: string,
+  companyId: string,
   input: UpdateInteractionBody,
 ): Promise<PublicInteraction> {
-  const interaction = await getInteractionById(interactionId);
+  const interaction = await getInteractionById(interactionId, companyId);
   if (input.channel !== undefined) interaction.channel = input.channel;
   if (input.content !== undefined) interaction.content = input.content;
   if (input.occurredAt !== undefined) interaction.occurredAt = new Date(input.occurredAt);
@@ -111,8 +119,8 @@ export async function updateInteraction(
   return toPublicInteraction(interaction);
 }
 
-export async function deleteInteraction(interactionId: string): Promise<void> {
-  const interaction = await getInteractionById(interactionId);
+export async function deleteInteraction(interactionId: string, companyId: string): Promise<void> {
+  const interaction = await getInteractionById(interactionId, companyId);
   const attachments = (interaction.get('attachments') as Attachment[] | undefined) ?? [];
   const storageKeys = attachments.map((attachment) => attachment.storageKey);
 

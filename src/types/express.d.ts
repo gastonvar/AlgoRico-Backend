@@ -3,6 +3,7 @@ declare global {
     interface Request {
       auth?: {
         sub: string;
+        companyId: string;
         sessionId: string;
         sessionToken: string;
       };

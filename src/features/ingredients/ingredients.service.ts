@@ -10,22 +10,24 @@ import type {
   UpdateIngredientBody,
 } from './ingredients.schemas.js';
 
-function ingredientSearchWhere(query: ListIngredientsQuery): WhereOptions {
-  if (!query.q) {
-    return {};
+function ingredientSearchWhere(companyId: string, query: ListIngredientsQuery): WhereOptions {
+  const where: WhereOptions = { companyId };
+  if (query.q) {
+    where.name = { [Op.iLike]: `%${query.q}%` };
   }
-  return {
-    name: { [Op.iLike]: `%${query.q}%` },
-  };
+  return where;
 }
 
-export async function listIngredients(query: ListIngredientsQuery): Promise<{
+export async function listIngredients(
+  companyId: string,
+  query: ListIngredientsQuery,
+): Promise<{
   data: PublicIngredient[];
   meta: ReturnType<typeof paginationMeta>;
 }> {
   const { limit, offset } = paginationOffset(query);
   const { rows, count } = await Ingredient.findAndCountAll({
-    where: ingredientSearchWhere(query),
+    where: ingredientSearchWhere(companyId, query),
     order: [['name', 'ASC']],
     limit,
     offset,
@@ -37,20 +39,24 @@ export async function listIngredients(query: ListIngredientsQuery): Promise<{
   };
 }
 
-export async function getIngredientById(ingredientId: string): Promise<Ingredient> {
-  const ingredient = await Ingredient.findByPk(ingredientId);
+export async function getIngredientById(ingredientId: string, companyId: string): Promise<Ingredient> {
+  const ingredient = await Ingredient.findOne({ where: { id: ingredientId, companyId } });
   if (!ingredient) {
     throw AppError.notFound('Ingredient not found');
   }
   return ingredient;
 }
 
-export async function getIngredient(ingredientId: string): Promise<PublicIngredient> {
-  return toPublicIngredient(await getIngredientById(ingredientId));
+export async function getIngredient(ingredientId: string, companyId: string): Promise<PublicIngredient> {
+  return toPublicIngredient(await getIngredientById(ingredientId, companyId));
 }
 
-export async function createIngredient(input: CreateIngredientBody): Promise<PublicIngredient> {
+export async function createIngredient(
+  companyId: string,
+  input: CreateIngredientBody,
+): Promise<PublicIngredient> {
   const ingredient = await Ingredient.create({
+    companyId,
     name: input.name,
     unit: input.unit,
     pricePerUnit: roundUnitPrice(input.pricePerUnit).toFixed(4),
@@ -61,9 +67,10 @@ export async function createIngredient(input: CreateIngredientBody): Promise<Pub
 
 export async function updateIngredient(
   ingredientId: string,
+  companyId: string,
   input: UpdateIngredientBody,
 ): Promise<PublicIngredient> {
-  const ingredient = await getIngredientById(ingredientId);
+  const ingredient = await getIngredientById(ingredientId, companyId);
 
   if (input.name !== undefined) ingredient.name = input.name;
   if (input.unit !== undefined) ingredient.unit = input.unit;
@@ -76,8 +83,8 @@ export async function updateIngredient(
   return toPublicIngredient(ingredient);
 }
 
-export async function deleteIngredient(ingredientId: string): Promise<void> {
-  const ingredient = await getIngredientById(ingredientId);
+export async function deleteIngredient(ingredientId: string, companyId: string): Promise<void> {
+  const ingredient = await getIngredientById(ingredientId, companyId);
   const usedCount = await RecipeIngredient.count({ where: { ingredientId } });
   if (usedCount > 0) {
     throw AppError.conflict('Ingredient is used in recipes');

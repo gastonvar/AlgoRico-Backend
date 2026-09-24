@@ -1,16 +1,21 @@
 import { AppError } from '../../errors/app-error.js';
 import { verifyPassword } from '../../lib/crypto.js';
 import { createUserSession, destroySession } from '../../lib/session.js';
-import { User } from '../../models/index.js';
+import { Company, User } from '../../models/index.js';
 import { toPublicUser, type PublicUser } from './auth.mappers.js';
 import type { LoginBody } from './auth.schemas.js';
+
+const withCompany = { include: [{ model: Company, as: 'company' }] };
 
 export async function loginUser(input: LoginBody): Promise<{
   user: PublicUser;
   sessionToken: string;
   csrfToken: string;
 }> {
-  const user = await User.findOne({ where: { email: input.email.toLowerCase() } });
+  const user = await User.findOne({
+    where: { email: input.email.toLowerCase() },
+    ...withCompany,
+  });
   if (!user || !user.active) {
     throw AppError.unauthorized('Invalid email or password');
   }
@@ -29,7 +34,7 @@ export async function loginUser(input: LoginBody): Promise<{
 }
 
 export async function getCurrentUser(userId: string): Promise<PublicUser> {
-  const user = await User.findByPk(userId);
+  const user = await User.findByPk(userId, withCompany);
   if (!user || !user.active) {
     throw AppError.unauthorized();
   }

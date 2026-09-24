@@ -6,6 +6,7 @@ export type UserAttributes = {
   email: string;
   passwordHash: string;
   active: boolean;
+  companyId: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -20,6 +21,7 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
   declare email: string;
   declare passwordHash: string;
   declare active: boolean;
+  declare companyId: string;
   declare createdAt: Date;
   declare updatedAt: Date;
 }
@@ -45,6 +47,10 @@ export function initUserModel(sequelize: Sequelize): typeof User {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: true,
+      },
+      companyId: {
+        type: DataTypes.UUID,
+        allowNull: false,
       },
       createdAt: { type: DataTypes.DATE, allowNull: false },
       updatedAt: { type: DataTypes.DATE, allowNull: false },

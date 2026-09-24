@@ -4,6 +4,7 @@ import type { InteractionChannel } from '../shared/constants.js';
 
 export type InteractionAttributes = {
   id: string;
+  companyId: string;
   clientId: string;
   orderId: string | null;
   userId: string;
@@ -21,6 +22,7 @@ export type InteractionCreationAttributes = Optional<
 
 export class Interaction extends Model<InteractionAttributes, InteractionCreationAttributes> {
   declare id: string;
+  declare companyId: string;
   declare clientId: string;
   declare orderId: string | null;
   declare userId: string;
@@ -38,6 +40,10 @@ export function initInteractionModel(sequelize: Sequelize): typeof Interaction {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
+      },
+      companyId: {
+        type: DataTypes.UUID,
+        allowNull: false,
       },
       clientId: {
         type: DataTypes.UUID,

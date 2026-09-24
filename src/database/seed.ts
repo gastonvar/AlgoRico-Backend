@@ -15,17 +15,20 @@ import {
 } from '../models/index.js';
 import { sequelize } from './sequelize.js';
 import { addZonedDays, formatDateOnly, startOfZonedDay } from '../shared/dates.js';
+import { ALGORICO_COMPANY_ID } from '../shared/companies.js';
 
 initModels();
 
 async function seed(): Promise<void> {
   await sequelize.authenticate();
 
-  const existing = await User.findOne({ where: { email: 'owner@algorico.local' } });
+  const existing = await User.findOne({ where: { email: 'victoriavanoli@hotmail.com' } });
   if (existing) {
     pinoLogger.info('Seed data already present; skipping');
     return;
   }
+
+  const companyId = ALGORICO_COMPANY_ID;
 
   const now = new Date();
   const today = formatDateOnly(now);
@@ -35,12 +38,14 @@ async function seed(): Promise<void> {
   const lastWeek = formatDateOnly(addZonedDays(now, -5));
 
   const owner = await User.create({
-    email: 'owner@algorico.local',
+    email: 'victoriavanoli@hotmail.com',
     passwordHash: await hashPassword('AlgoRicoDev1!'),
     active: true,
+    companyId,
   });
 
   const maria = await Client.create({
+    companyId,
     name: 'Maria Lopez',
     phone: '+5491100000001',
     instagramUsername: 'maria.bakes',
@@ -50,6 +55,7 @@ async function seed(): Promise<void> {
   });
 
   const juan = await Client.create({
+    companyId,
     name: 'Juan Perez',
     phone: '+5491100000002',
     instagramUsername: 'juan.p',
@@ -58,6 +64,7 @@ async function seed(): Promise<void> {
   });
 
   const sofia = await Client.create({
+    companyId,
     name: 'Sofia Gomez',
     phone: '+5491100000003',
     instagramUsername: 'sofi.gomez',
@@ -66,6 +73,7 @@ async function seed(): Promise<void> {
   });
 
   const lucia = await Client.create({
+    companyId,
     name: 'Lucia Fernandez',
     phone: '+5491100000004',
     instagramUsername: 'lu.fer',
@@ -74,6 +82,7 @@ async function seed(): Promise<void> {
   });
 
   const andres = await Client.create({
+    companyId,
     name: 'Andres Ruiz',
     phone: '+5491100000005',
     instagramUsername: 'andres.r',
@@ -81,37 +90,44 @@ async function seed(): Promise<void> {
   });
 
   const harina = await Ingredient.create({
+    companyId,
     name: 'Harina 000',
     unit: 'kg',
     pricePerUnit: '100.0000',
   });
   const azucar = await Ingredient.create({
+    companyId,
     name: 'Azúcar',
     unit: 'kg',
     pricePerUnit: '180.0000',
   });
   const huevos = await Ingredient.create({
+    companyId,
     name: 'Huevos',
     unit: 'un',
     pricePerUnit: '20.0000',
   });
   const manteca = await Ingredient.create({
+    companyId,
     name: 'Manteca',
     unit: 'kg',
     pricePerUnit: '3200.0000',
   });
   const chocolate = await Ingredient.create({
+    companyId,
     name: 'Chocolate',
     unit: 'kg',
     pricePerUnit: '4500.0000',
   });
   const vainilla = await Ingredient.create({
+    companyId,
     name: 'Esencia de vainilla',
     unit: 'ml',
     pricePerUnit: '8.0000',
   });
 
   const chocolateCake = await Recipe.create({
+    companyId,
     name: 'Torta de chocolate',
     description: 'Torta de cumpleaños con ganache',
   });
@@ -124,6 +140,7 @@ async function seed(): Promise<void> {
   ]);
 
   const vanillaCupcakes = await Recipe.create({
+    companyId,
     name: 'Cupcakes de vainilla',
     description: 'Docena de cupcakes con buttercream',
   });
@@ -136,6 +153,7 @@ async function seed(): Promise<void> {
   ]);
 
   const cookieBox = await Recipe.create({
+    companyId,
     name: 'Caja de cookies',
     description: 'Caja surtida de cookies',
   });
@@ -147,6 +165,7 @@ async function seed(): Promise<void> {
   ]);
 
   const brownies = await Recipe.create({
+    companyId,
     name: 'Bandeja de brownies',
   });
   await RecipeIngredient.bulkCreate([
@@ -158,6 +177,7 @@ async function seed(): Promise<void> {
   ]);
 
   const rainbowCupcakes = await Recipe.create({
+    companyId,
     name: 'Cupcakes arcoíris',
   });
   await RecipeIngredient.bulkCreate([
@@ -168,6 +188,7 @@ async function seed(): Promise<void> {
   ]);
 
   const weddingCake = await Recipe.create({
+    companyId,
     name: 'Torta de casamiento',
     description: 'Dos pisos',
   });
@@ -181,6 +202,7 @@ async function seed(): Promise<void> {
 
   await Interaction.bulkCreate([
     {
+      companyId,
       clientId: maria.id,
       userId: owner.id,
       channel: 'INSTAGRAM',
@@ -188,6 +210,7 @@ async function seed(): Promise<void> {
       occurredAt: addZonedDays(now, -10),
     },
     {
+      companyId,
       clientId: maria.id,
       userId: owner.id,
       channel: 'WHATSAPP',
@@ -195,6 +218,7 @@ async function seed(): Promise<void> {
       occurredAt: addZonedDays(now, -8),
     },
     {
+      companyId,
       clientId: maria.id,
       userId: owner.id,
       channel: 'WHATSAPP',
@@ -202,6 +226,7 @@ async function seed(): Promise<void> {
       occurredAt: addZonedDays(now, -7),
     },
     {
+      companyId,
       clientId: juan.id,
       userId: owner.id,
       channel: 'WHATSAPP',
@@ -209,6 +234,7 @@ async function seed(): Promise<void> {
       occurredAt: addZonedDays(now, -3),
     },
     {
+      companyId,
       clientId: lucia.id,
       userId: owner.id,
       channel: 'INSTAGRAM',
@@ -216,6 +242,7 @@ async function seed(): Promise<void> {
       occurredAt: addZonedDays(now, -4),
     },
     {
+      companyId,
       clientId: sofia.id,
       userId: owner.id,
       channel: 'PHONE',
@@ -225,6 +252,7 @@ async function seed(): Promise<void> {
   ]);
 
   const mariaOrder = await Order.create({
+    companyId,
     clientId: maria.id,
     status: 'CONFIRMED',
     eventDate: today,
@@ -252,6 +280,7 @@ async function seed(): Promise<void> {
   mariaOrder.totalAmount = '63000.00';
   await mariaOrder.save();
   await Payment.create({
+    companyId,
     orderId: mariaOrder.id,
     type: 'DEPOSIT',
     amount: '20000.00',
@@ -262,6 +291,7 @@ async function seed(): Promise<void> {
   });
 
   const juanOrder = await Order.create({
+    companyId,
     clientId: juan.id,
     status: 'IN_PRODUCTION',
     eventDate: tomorrow,
@@ -291,6 +321,7 @@ async function seed(): Promise<void> {
   juanOrder.totalAmount = '32000.00';
   await juanOrder.save();
   await Payment.create({
+    companyId,
     orderId: juanOrder.id,
     type: 'DEPOSIT',
     amount: '32000.00',
@@ -300,6 +331,7 @@ async function seed(): Promise<void> {
   });
 
   const sofiaOrder = await Order.create({
+    companyId,
     clientId: sofia.id,
     status: 'COMPLETED',
     eventDate: lastWeek,
@@ -319,6 +351,7 @@ async function seed(): Promise<void> {
   await sofiaOrder.save();
   await Payment.bulkCreate([
     {
+      companyId,
       orderId: sofiaOrder.id,
       type: 'DEPOSIT',
       amount: '8000.00',
@@ -326,6 +359,7 @@ async function seed(): Promise<void> {
       paidAt: addZonedDays(now, -12),
     },
     {
+      companyId,
       orderId: sofiaOrder.id,
       type: 'FINAL',
       amount: '10000.00',
@@ -335,6 +369,7 @@ async function seed(): Promise<void> {
   ]);
 
   const luciaOrder = await Order.create({
+    companyId,
     clientId: lucia.id,
     status: 'QUOTED',
     eventDate: nextWeek,
@@ -354,6 +389,7 @@ async function seed(): Promise<void> {
   await luciaOrder.save();
 
   const andresOrder = await Order.create({
+    companyId,
     clientId: andres.id,
     status: 'CONFIRMED',
     eventDate: yesterday,
@@ -370,6 +406,7 @@ async function seed(): Promise<void> {
     unitPrice: '2174.00',
   });
   await Payment.create({
+    companyId,
     orderId: andresOrder.id,
     type: 'DEPOSIT',
     amount: '15000.00',
@@ -380,6 +417,7 @@ async function seed(): Promise<void> {
 
   await Task.bulkCreate([
     {
+      companyId,
       clientId: lucia.id,
       orderId: luciaOrder.id,
       title: 'Follow up with Lucia',
@@ -390,6 +428,7 @@ async function seed(): Promise<void> {
       createdBy: owner.id,
     },
     {
+      companyId,
       clientId: maria.id,
       orderId: mariaOrder.id,
       title: 'Prepare Maria order',
@@ -400,6 +439,7 @@ async function seed(): Promise<void> {
       createdBy: owner.id,
     },
     {
+      companyId,
       clientId: juan.id,
       orderId: juanOrder.id,
       title: 'Confirm delivery address',
@@ -409,6 +449,7 @@ async function seed(): Promise<void> {
       createdBy: owner.id,
     },
     {
+      companyId,
       clientId: andres.id,
       orderId: andresOrder.id,
       title: 'Collect remaining payment from Andres',
@@ -418,6 +459,7 @@ async function seed(): Promise<void> {
       createdBy: owner.id,
     },
     {
+      companyId,
       title: 'Order boxes and ribbons',
       description: 'General studio supplies',
       dueAt: addZonedDays(now, 5),
@@ -429,7 +471,7 @@ async function seed(): Promise<void> {
 
   pinoLogger.info(
     {
-      user: 'owner@algorico.local',
+      user: 'victoriavanoli@hotmail.com',
       clients: 5,
       ingredients: 6,
       recipes: 6,

@@ -21,6 +21,7 @@ export type AttachmentDownload = PublicAttachment & {
 
 async function persistFiles(input: {
   files: Express.Multer.File[];
+  companyId: string;
   clientId: string;
   parentKind: AttachmentParentKind;
   parentId: string;
@@ -63,6 +64,7 @@ async function persistFiles(input: {
         Attachment.create(
           {
             id: attachmentId,
+            companyId: input.companyId,
             interactionId: input.interactionId,
             paymentId: input.paymentId,
             originalFilename: sanitizeFilename(file.originalname),
@@ -92,11 +94,13 @@ async function persistFiles(input: {
 
 export async function createInteractionAttachments(
   interactionId: string,
+  companyId: string,
   files: Express.Multer.File[],
 ): Promise<PublicAttachment[]> {
-  const interaction = await getInteractionById(interactionId);
+  const interaction = await getInteractionById(interactionId, companyId);
   return persistFiles({
     files,
+    companyId,
     clientId: interaction.clientId,
     parentKind: 'interaction',
     parentId: interaction.id,
@@ -107,9 +111,11 @@ export async function createInteractionAttachments(
 
 export async function createPaymentAttachments(
   paymentId: string,
+  companyId: string,
   files: Express.Multer.File[],
 ): Promise<PublicAttachment[]> {
-  const payment = await Payment.findByPk(paymentId, {
+  const payment = await Payment.findOne({
+    where: { id: paymentId, companyId },
     include: [{ model: Order, as: 'order' }],
   });
   if (!payment) {
@@ -123,6 +129,7 @@ export async function createPaymentAttachments(
 
   return persistFiles({
     files,
+    companyId,
     clientId: order.clientId,
     parentKind: 'payment',
     parentId: payment.id,
@@ -131,8 +138,8 @@ export async function createPaymentAttachments(
   });
 }
 
-export async function getAttachment(attachmentId: string): Promise<AttachmentDownload> {
-  const attachment = await Attachment.findByPk(attachmentId);
+export async function getAttachment(attachmentId: string, companyId: string): Promise<AttachmentDownload> {
+  const attachment = await Attachment.findOne({ where: { id: attachmentId, companyId } });
   if (!attachment) {
     throw AppError.notFound('Attachment not found');
   }
@@ -145,8 +152,8 @@ export async function getAttachment(attachmentId: string): Promise<AttachmentDow
   };
 }
 
-export async function deleteAttachment(attachmentId: string): Promise<void> {
-  const attachment = await Attachment.findByPk(attachmentId);
+export async function deleteAttachment(attachmentId: string, companyId: string): Promise<void> {
+  const attachment = await Attachment.findOne({ where: { id: attachmentId, companyId } });
   if (!attachment) {
     throw AppError.notFound('Attachment not found');
   }
