@@ -36,6 +36,7 @@ export function extensionForMime(mimeType: string): string {
 export type AttachmentParentKind = 'interaction' | 'payment';
 
 export function buildAttachmentStorageKey(input: {
+  companyId: string;
   clientId: string;
   parentKind: AttachmentParentKind;
   parentId: string;
@@ -43,5 +44,5 @@ export function buildAttachmentStorageKey(input: {
   mimeType: string;
 }): string {
   const folder = input.parentKind === 'payment' ? 'payments' : 'interactions';
-  return `clients/${input.clientId}/${folder}/${input.parentId}/${input.attachmentId}.${extensionForMime(input.mimeType)}`;
+  return `companies/${input.companyId}/clients/${input.clientId}/${folder}/${input.parentId}/${input.attachmentId}.${extensionForMime(input.mimeType)}`;
 }

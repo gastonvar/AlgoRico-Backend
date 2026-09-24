@@ -38,6 +38,7 @@ async function persistFiles(input: {
     assertAllowedImage(file);
     const attachmentId = randomUUID();
     const storageKey = buildAttachmentStorageKey({
+      companyId: input.companyId,
       clientId: input.clientId,
       parentKind: input.parentKind,
       parentId: input.parentId,

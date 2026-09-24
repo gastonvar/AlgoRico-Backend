@@ -167,7 +167,7 @@ Multipart field name: `files`. Allowed types: `image/jpeg`, `image/png`, `image/
 
 ### `POST /api/interactions/:interactionId/attachments`
 
-Response `201`: array of attachment metadata. Object keys are generated server-side.
+Response `201`: array of attachment metadata. Object keys are generated server-side as `companies/{companyId}/clients/{clientId}/...`. Existing objects keep whatever key was stored at upload time.
 
 ### `POST /api/payments/:paymentId/attachments`
 
