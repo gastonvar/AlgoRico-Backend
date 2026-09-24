@@ -7,6 +7,7 @@ import {
 import { paginationQuerySchema } from '../../shared/pagination.js';
 import { dateOnlySchema, idParams, optionalTrimmed, timeSchema } from '../../shared/schemas.js';
 
+
 export const orderIdParamsSchema = idParams('orderId');
 export const orderItemParamsSchema = z.object({
   orderId: z.string().uuid(),
@@ -29,12 +30,14 @@ export const createOrderBodySchema = z.object({
   eventTime: timeSchema.optional(),
   description: optionalTrimmed,
   fulfillmentType: z.enum(FULFILLMENT_TYPES).optional(),
+  deliveryDate: dateOnlySchema.optional(),
   deliveryAddress: optionalTrimmed,
   deliveryTime: timeSchema.optional(),
   notes: optionalTrimmed,
-  totalAmount: moneyAmountSchema.optional(),
+  totalAmount: moneyAmountSchema,
   items: z.array(orderItemBodySchema).optional(),
 });
+
 
 export const replaceOrderItemBodySchema = orderItemBodySchema.extend({
   id: z.string().uuid().optional(),
@@ -47,6 +50,7 @@ export const updateOrderBodySchema = z
     eventTime: timeSchema.nullable().optional(),
     description: z.string().trim().max(10_000).nullable().optional(),
     fulfillmentType: z.enum(FULFILLMENT_TYPES).optional(),
+    deliveryDate: dateOnlySchema.nullable().optional(),
     deliveryAddress: z.string().trim().max(10_000).nullable().optional(),
     deliveryTime: timeSchema.nullable().optional(),
     notes: z.string().trim().max(10_000).nullable().optional(),

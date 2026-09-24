@@ -11,6 +11,7 @@ export type OrderAttributes = {
   eventTime: string | null;
   description: string | null;
   fulfillmentType: FulfillmentType;
+  deliveryDate: string | null;
   deliveryAddress: string | null;
   deliveryTime: string | null;
   totalAmount: string;
@@ -26,6 +27,7 @@ export type OrderCreationAttributes = Optional<
   | 'eventDate'
   | 'eventTime'
   | 'description'
+  | 'deliveryDate'
   | 'deliveryAddress'
   | 'deliveryTime'
   | 'totalAmount'
@@ -43,6 +45,7 @@ export class Order extends Model<OrderAttributes, OrderCreationAttributes> {
   declare eventTime: string | null;
   declare description: string | null;
   declare fulfillmentType: FulfillmentType;
+  declare deliveryDate: string | null;
   declare deliveryAddress: string | null;
   declare deliveryTime: string | null;
   declare totalAmount: string;
@@ -88,6 +91,10 @@ export function initOrderModel(sequelize: Sequelize): typeof Order {
         type: DataTypes.STRING(16),
         allowNull: false,
         defaultValue: 'PICKUP',
+      },
+      deliveryDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
       },
       deliveryAddress: {
         type: DataTypes.TEXT,

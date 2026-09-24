@@ -129,6 +129,7 @@ describe('Algo Rico API', () => {
         fulfillmentType: 'PICKUP',
         eventDate: '2026-09-20',
         eventTime: '15:00',
+        totalAmount: 30000,
         items: [
           {
             description: 'Custom Tart',
@@ -392,6 +393,39 @@ describe('Algo Rico API', () => {
     expect(updated.body.data.remainingBalance).toBe(12000);
   });
 
+  it('creates an order without items when a total is provided', async ({ skip }) => {
+    if (!dbAvailable) skip();
+
+    const agent = request.agent(app);
+    const loginResponse = await agent.post('/api/auth/login').send({
+      email: 'victoriavanoli@hotmail.com',
+      password: 'AlgoRicoDev1!',
+    });
+    expect(loginResponse.status).toBe(200);
+    const csrfToken = loginResponse.body.data.csrfToken as string;
+
+    const clientResponse = await agent
+      .post('/api/clients')
+      .set('x-csrf-token', csrfToken)
+      .send({ name: 'Pedido sin recetas' });
+    expect(clientResponse.status).toBe(201);
+    const clientId = clientResponse.body.data.id as string;
+
+    const created = await agent
+      .post(`/api/clients/${clientId}/orders`)
+      .set('x-csrf-token', csrfToken)
+      .send({
+        fulfillmentType: 'DELIVERY',
+        deliveryAddress: 'Calle 123',
+        totalAmount: 18000,
+      });
+    expect(created.status).toBe(201);
+    expect(created.body.data.items).toEqual([]);
+    expect(created.body.data.eventDate).toBeNull();
+    expect(created.body.data.deliveryDate).toBeNull();
+    expect(created.body.data.totalAmount).toBe(18000);
+  });
+
   it('costs recipes from ingredients and orders from recipe quantity', async ({ skip }) => {
     if (!dbAvailable) skip();
 
@@ -445,6 +479,7 @@ describe('Algo Rico API', () => {
       .send({
         eventDate: '2026-11-01',
         items: [{ recipeId: recipe.body.data.id, quantity: 2 }],
+        totalAmount: 260,
       });
     expect(order.status).toBe(201);
     expect(order.body.data.totalAmount).toBe(260);

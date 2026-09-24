@@ -51,6 +51,7 @@ export type PublicOrder = {
   eventTime: string | null;
   description: string | null;
   fulfillmentType: string;
+  deliveryDate: string | null;
   deliveryAddress: string | null;
   deliveryTime: string | null;
   notes: string | null;
@@ -117,6 +118,7 @@ export function toPublicOrder(
     eventTime: order.eventTime,
     description: order.description,
     fulfillmentType: order.fulfillmentType,
+    deliveryDate: order.deliveryDate,
     deliveryAddress: order.deliveryAddress,
     deliveryTime: order.deliveryTime,
     notes: order.notes,
