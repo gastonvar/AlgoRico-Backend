@@ -16,7 +16,6 @@ import { roundMoney } from '../../shared/money.js';
 import {
   paymentSummaryForOrder,
   paymentsTotalsByOrderIds,
-  recalculateOrderTotal,
 } from './order-finance.js';
 import { toPublicOrder, type PublicOrder } from './orders.mappers.js';
 import type {
@@ -193,6 +192,7 @@ export async function createOrder(
         eventTime: input.eventTime ?? null,
         description: input.description ?? null,
         fulfillmentType,
+        deliveryDate: input.deliveryDate ?? null,
         deliveryAddress: input.deliveryAddress ?? null,
         deliveryTime: input.deliveryTime ?? null,
         notes: input.notes ?? null,
@@ -212,9 +212,7 @@ export async function createOrder(
       );
     }
 
-    const computed = await recalculateOrderTotal(created.id, transaction);
-    const total = input.totalAmount === undefined ? computed : input.totalAmount;
-    await applyOrderTotal(created, total, transaction);
+    await applyOrderTotal(created, input.totalAmount, transaction);
     return created;
   });
 
@@ -328,6 +326,7 @@ export async function updateOrder(
     if (input.eventTime !== undefined) current.eventTime = input.eventTime;
     if (input.description !== undefined) current.description = input.description;
     if (input.fulfillmentType !== undefined) current.fulfillmentType = input.fulfillmentType;
+    if (input.deliveryDate !== undefined) current.deliveryDate = input.deliveryDate;
     if (input.deliveryAddress !== undefined) current.deliveryAddress = input.deliveryAddress;
     if (input.deliveryTime !== undefined) current.deliveryTime = input.deliveryTime;
     if (input.notes !== undefined) current.notes = input.notes;
