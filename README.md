@@ -87,7 +87,7 @@ Mutating `/api/*` business requests must send `x-csrf-token`. Passwords are hash
 
 ## Attachments
 
-Screenshots are stored in MinIO. PostgreSQL stores metadata and the object key. Download URLs are short-lived and generated only after authentication.
+Screenshots are stored in MinIO under `companies/{companyId}/...`. PostgreSQL stores metadata and the object key. Download URLs are short-lived and generated only after authentication. Existing files keep their original keys.
 
 ## API documentation
 
