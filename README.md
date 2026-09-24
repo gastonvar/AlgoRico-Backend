@@ -36,10 +36,15 @@ npm run db:seed
 npm run dev
 ```
 
-Development login:
+Development login (Algo Rico tenant, owns all seeded demo data):
 
-- Email: `owner@algorico.local`
+- Email: `victoriavanoli@hotmail.com`
 - Password: `AlgoRicoDev1!`
+
+Migrations also provision the two Arome tenant accounts (`antonelita260107@gmail.com`
+and `hallerjanire8@gmail.com`) with temporary passwords set in
+`src/database/migrations/010-arome-users.ts`. They start with no data; anything
+they create is scoped to the Arome company.
 
 ## Tests
 

@@ -5,8 +5,8 @@ import { paginationMeta, paginationOffset } from '../../shared/pagination.js';
 import { toPublicClient, type ClientDetail, type PublicClient } from './clients.mappers.js';
 import type { CreateClientBody, ListClientsQuery, UpdateClientBody } from './clients.schemas.js';
 
-function clientSearchWhere(query: ListClientsQuery): WhereOptions {
-  const where: WhereOptions = {};
+function clientSearchWhere(companyId: string, query: ListClientsQuery): WhereOptions {
+  const where: WhereOptions = { companyId };
 
   if (!query.includeArchived) {
     where.archivedAt = null;
@@ -30,13 +30,16 @@ function clientSearchWhere(query: ListClientsQuery): WhereOptions {
   return where;
 }
 
-export async function listClients(query: ListClientsQuery): Promise<{
+export async function listClients(
+  companyId: string,
+  query: ListClientsQuery,
+): Promise<{
   data: PublicClient[];
   meta: ReturnType<typeof paginationMeta>;
 }> {
   const { limit, offset } = paginationOffset(query);
   const { rows, count } = await Client.findAndCountAll({
-    where: clientSearchWhere(query),
+    where: clientSearchWhere(companyId, query),
     order: [['name', 'ASC']],
     limit,
     offset,
@@ -48,8 +51,9 @@ export async function listClients(query: ListClientsQuery): Promise<{
   };
 }
 
-export async function createClient(input: CreateClientBody): Promise<PublicClient> {
+export async function createClient(companyId: string, input: CreateClientBody): Promise<PublicClient> {
   const client = await Client.create({
+    companyId,
     name: input.name,
     phone: input.phone ?? null,
     instagramUsername: input.instagramUsername ?? null,
@@ -61,16 +65,20 @@ export async function createClient(input: CreateClientBody): Promise<PublicClien
   return toPublicClient(client);
 }
 
-export async function getClientById(clientId: string, options?: { includeArchived?: boolean }): Promise<Client> {
-  const client = await Client.findByPk(clientId);
+export async function getClientById(
+  clientId: string,
+  companyId: string,
+  options?: { includeArchived?: boolean },
+): Promise<Client> {
+  const client = await Client.findOne({ where: { id: clientId, companyId } });
   if (!client || (!options?.includeArchived && client.archivedAt)) {
     throw AppError.notFound('Client not found');
   }
   return client;
 }
 
-export async function getClientDetail(clientId: string): Promise<ClientDetail> {
-  const client = await getClientById(clientId, { includeArchived: true });
+export async function getClientDetail(clientId: string, companyId: string): Promise<ClientDetail> {
+  const client = await getClientById(clientId, companyId, { includeArchived: true });
 
   const [interactionCount, orderCount, openTaskCount] = await Promise.all([
     Interaction.count({ where: { clientId } }),
@@ -86,8 +94,12 @@ export async function getClientDetail(clientId: string): Promise<ClientDetail> {
   };
 }
 
-export async function updateClient(clientId: string, input: UpdateClientBody): Promise<PublicClient> {
-  const client = await getClientById(clientId, { includeArchived: true });
+export async function updateClient(
+  clientId: string,
+  companyId: string,
+  input: UpdateClientBody,
+): Promise<PublicClient> {
+  const client = await getClientById(clientId, companyId, { includeArchived: true });
 
   if (input.name !== undefined) client.name = input.name;
   if (input.phone !== undefined) client.phone = input.phone;

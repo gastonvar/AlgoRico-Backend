@@ -3,6 +3,7 @@ import { DataTypes, Model, type Sequelize } from 'sequelize';
 
 export type AttachmentAttributes = {
   id: string;
+  companyId: string;
   interactionId: string | null;
   paymentId: string | null;
   originalFilename: string;
@@ -20,6 +21,7 @@ export type AttachmentCreationAttributes = Optional<
 
 export class Attachment extends Model<AttachmentAttributes, AttachmentCreationAttributes> {
   declare id: string;
+  declare companyId: string;
   declare interactionId: string | null;
   declare paymentId: string | null;
   declare originalFilename: string;
@@ -37,6 +39,10 @@ export function initAttachmentModel(sequelize: Sequelize): typeof Attachment {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
+      },
+      companyId: {
+        type: DataTypes.UUID,
+        allowNull: false,
       },
       interactionId: {
         type: DataTypes.UUID,

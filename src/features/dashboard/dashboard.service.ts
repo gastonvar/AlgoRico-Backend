@@ -68,7 +68,7 @@ function toListOrder(
   });
 }
 
-export async function getDashboard(): Promise<DashboardPayload> {
+export async function getDashboard(companyId: string): Promise<DashboardPayload> {
   const now = new Date();
   const today = formatDateOnly(now);
   const todayStart = startOfZonedDay(now);
@@ -87,12 +87,13 @@ export async function getDashboard(): Promise<DashboardPayload> {
     outstandingCandidateOrders,
   ] = await Promise.all([
     Order.findAll({
-      where: { eventDate: today, status: { [Op.ne]: 'CANCELLED' } },
+      where: { companyId, eventDate: today, status: { [Op.ne]: 'CANCELLED' } },
       include: [{ model: Client, as: 'client' }],
       order: [['eventTime', 'ASC']],
     }),
     Order.findAll({
       where: {
+        companyId,
         eventDate: { [Op.gt]: today, [Op.lte]: upcomingEndDate },
         status: { [Op.notIn]: ['CANCELLED', 'COMPLETED'] },
       },
@@ -102,12 +103,13 @@ export async function getDashboard(): Promise<DashboardPayload> {
     }),
     Order.findAll({
       where: {
+        companyId,
         status: { [Op.in]: [...ACTIVE_ORDER_STATUSES] },
       },
       include: [{ model: Client, as: 'client' }],
     }),
     Task.findAll({
-      where: { completed: false, dueAt: { [Op.lt]: todayStart } },
+      where: { companyId, completed: false, dueAt: { [Op.lt]: todayStart } },
       include: [
         { model: Client, as: 'client' },
         { model: Order, as: 'order' },
@@ -116,7 +118,7 @@ export async function getDashboard(): Promise<DashboardPayload> {
       limit: 20,
     }),
     Task.findAll({
-      where: { completed: false, dueAt: { [Op.between]: [todayStart, todayEnd] } },
+      where: { companyId, completed: false, dueAt: { [Op.between]: [todayStart, todayEnd] } },
       include: [
         { model: Client, as: 'client' },
         { model: Order, as: 'order' },
@@ -126,6 +128,7 @@ export async function getDashboard(): Promise<DashboardPayload> {
     }),
     Task.findAll({
       where: {
+        companyId,
         completed: false,
         dueAt: { [Op.gt]: todayEnd, [Op.lte]: upcomingTaskEnd },
       },
@@ -137,12 +140,13 @@ export async function getDashboard(): Promise<DashboardPayload> {
       limit: 20,
     }),
     Client.findAll({
-      where: { needsFollowUp: true, archivedAt: null },
+      where: { companyId, needsFollowUp: true, archivedAt: null },
       order: [['updatedAt', 'DESC']],
       limit: 20,
     }),
     Order.findAll({
       where: {
+        companyId,
         status: { [Op.notIn]: ['CANCELLED'] },
         totalAmount: { [Op.gt]: 0 },
       },

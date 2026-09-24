@@ -4,6 +4,7 @@ import type { IngredientUnit } from '../shared/constants.js';
 
 export type IngredientAttributes = {
   id: string;
+  companyId: string;
   name: string;
   unit: IngredientUnit;
   pricePerUnit: string;
@@ -19,6 +20,7 @@ export type IngredientCreationAttributes = Optional<
 
 export class Ingredient extends Model<IngredientAttributes, IngredientCreationAttributes> {
   declare id: string;
+  declare companyId: string;
   declare name: string;
   declare unit: IngredientUnit;
   declare pricePerUnit: string;
@@ -34,6 +36,10 @@ export function initIngredientModel(sequelize: Sequelize): typeof Ingredient {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
+      },
+      companyId: {
+        type: DataTypes.UUID,
+        allowNull: false,
       },
       name: {
         type: DataTypes.STRING(255),

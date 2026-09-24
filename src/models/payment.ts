@@ -4,6 +4,7 @@ import type { PaymentMethod, PaymentType } from '../shared/constants.js';
 
 export type PaymentAttributes = {
   id: string;
+  companyId: string;
   orderId: string;
   type: PaymentType;
   amount: string;
@@ -22,6 +23,7 @@ export type PaymentCreationAttributes = Optional<
 
 export class Payment extends Model<PaymentAttributes, PaymentCreationAttributes> {
   declare id: string;
+  declare companyId: string;
   declare orderId: string;
   declare type: PaymentType;
   declare amount: string;
@@ -40,6 +42,10 @@ export function initPaymentModel(sequelize: Sequelize): typeof Payment {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
+      },
+      companyId: {
+        type: DataTypes.UUID,
+        allowNull: false,
       },
       orderId: {
         type: DataTypes.UUID,

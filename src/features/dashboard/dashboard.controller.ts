@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
+import { currentCompanyId } from '../../middleware/auth.js';
 import { getDashboard } from './dashboard.service.js';
 
-export async function get(_req: Request, res: Response): Promise<void> {
-  const data = await getDashboard();
+export async function get(req: Request, res: Response): Promise<void> {
+  const data = await getDashboard(currentCompanyId(req));
   res.status(200).json({ data });
 }

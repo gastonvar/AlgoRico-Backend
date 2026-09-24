@@ -19,9 +19,10 @@ export type CalendarEntry = {
   paymentStatus: string;
 };
 
-export async function getCalendar(query: CalendarQuery): Promise<CalendarEntry[]> {
+export async function getCalendar(companyId: string, query: CalendarQuery): Promise<CalendarEntry[]> {
   const orders = await Order.findAll({
     where: {
+      companyId,
       eventDate: { [Op.between]: [query.from, query.to] },
       ...(query.includeCancelled ? {} : { status: { [Op.ne]: 'CANCELLED' } }),
     },

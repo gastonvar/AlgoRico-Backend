@@ -1,6 +1,7 @@
 import { sequelize } from '../database/sequelize.js';
 import { Attachment, initAttachmentModel } from './attachment.js';
 import { Client, initClientModel } from './client.js';
+import { Company, initCompanyModel } from './company.js';
 import { Ingredient, initIngredientModel } from './ingredient.js';
 import { Interaction, initInteractionModel } from './interaction.js';
 import { Order, initOrderModel } from './order.js';
@@ -19,6 +20,7 @@ export function initModels(): void {
     return;
   }
 
+  initCompanyModel(sequelize);
   initUserModel(sequelize);
   initSessionModel(sequelize);
   initClientModel(sequelize);
@@ -31,6 +33,33 @@ export function initModels(): void {
   initOrderItemModel(sequelize);
   initPaymentModel(sequelize);
   initTaskModel(sequelize);
+
+  Company.hasMany(User, { foreignKey: 'companyId', as: 'users' });
+  User.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+  Company.hasMany(Client, { foreignKey: 'companyId', as: 'clients' });
+  Client.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+  Company.hasMany(Ingredient, { foreignKey: 'companyId', as: 'ingredients' });
+  Ingredient.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+  Company.hasMany(Recipe, { foreignKey: 'companyId', as: 'recipes' });
+  Recipe.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+  Company.hasMany(Task, { foreignKey: 'companyId', as: 'companyTasks' });
+  Task.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+  Company.hasMany(Order, { foreignKey: 'companyId', as: 'orders' });
+  Order.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+  Company.hasMany(Interaction, { foreignKey: 'companyId', as: 'companyInteractions' });
+  Interaction.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+  Company.hasMany(Payment, { foreignKey: 'companyId', as: 'companyPayments' });
+  Payment.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+
+  Company.hasMany(Attachment, { foreignKey: 'companyId', as: 'companyAttachments' });
+  Attachment.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
 
   User.hasMany(Session, { foreignKey: 'userId', as: 'sessions' });
   Session.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -83,6 +112,7 @@ export function initModels(): void {
 export {
   Attachment,
   Client,
+  Company,
   Ingredient,
   Interaction,
   Order,

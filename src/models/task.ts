@@ -4,6 +4,7 @@ import type { TaskPriority } from '../shared/constants.js';
 
 export type TaskAttributes = {
   id: string;
+  companyId: string;
   clientId: string | null;
   orderId: string | null;
   title: string;
@@ -33,6 +34,7 @@ export type TaskCreationAttributes = Optional<
 
 export class Task extends Model<TaskAttributes, TaskCreationAttributes> {
   declare id: string;
+  declare companyId: string;
   declare clientId: string | null;
   declare orderId: string | null;
   declare title: string;
@@ -53,6 +55,10 @@ export function initTaskModel(sequelize: Sequelize): typeof Task {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
+      },
+      companyId: {
+        type: DataTypes.UUID,
+        allowNull: false,
       },
       clientId: {
         type: DataTypes.UUID,

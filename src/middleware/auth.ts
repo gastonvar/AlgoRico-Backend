@@ -23,6 +23,7 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction): v
 
       req.auth = {
         sub: result.user.id,
+        companyId: result.user.companyId,
         sessionId: result.session.id,
         sessionToken: token,
       };
@@ -58,4 +59,11 @@ export function currentUserId(req: Request): string {
     throw AppError.unauthorized();
   }
   return req.auth.sub;
+}
+
+export function currentCompanyId(req: Request): string {
+  if (!req.auth?.companyId) {
+    throw AppError.unauthorized();
+  }
+  return req.auth.companyId;
 }

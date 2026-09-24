@@ -3,6 +3,7 @@ import { DataTypes, Model, type Sequelize } from 'sequelize';
 
 export type ClientAttributes = {
   id: string;
+  companyId: string;
   name: string;
   phone: string | null;
   instagramUsername: string | null;
@@ -29,6 +30,7 @@ export type ClientCreationAttributes = Optional<
 
 export class Client extends Model<ClientAttributes, ClientCreationAttributes> {
   declare id: string;
+  declare companyId: string;
   declare name: string;
   declare phone: string | null;
   declare instagramUsername: string | null;
@@ -47,6 +49,10 @@ export function initClientModel(sequelize: Sequelize): typeof Client {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
+      },
+      companyId: {
+        type: DataTypes.UUID,
+        allowNull: false,
       },
       name: {
         type: DataTypes.STRING(255),
